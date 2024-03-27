@@ -3,3 +3,8 @@
 /workspace.xml
 # GitHub Copilot persisted chat sessions
 /copilot/chatSessions
+
+sonarlint/
+appInsightsSettings.xml
+aws.xml
+deploymentTargetDropDown.xml
