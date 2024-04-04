@@ -4,8 +4,8 @@ set -e
 
 export PATH="/opt/Android/cmake/3.22.1/bin:$PATH"
 export ANDROID_COMPILE_SDK="android-33"
-export YOUR_OPENCV_SRC_FOLDER=./opencv
-export YOUR_OPENCV_BUILD_FOLDER=./opencv/build
+export YOUR_OPENCV_SRC_FOLDER=opencv
+export YOUR_OPENCV_BUILD_FOLDER=../jniLibs
 export ANDROID_SDK=/opt/Android
 export NDK_ROOT=/opt/Android/ndk/25.2.9519653
 
