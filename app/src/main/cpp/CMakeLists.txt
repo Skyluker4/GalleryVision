@@ -42,7 +42,7 @@ find_library(
         # Specifies the name of the NDK library that you want CMake to locate.
         log)
 
-set( PADDLE_LITE_SRC_DIR /home/luke/Computerizing/Paddle-Lite )
+set( PADDLE_LITE_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../../PaddleLite" )
 set( PADDLE_LITE_BUILD_DIR ${PADDLE_LITE_SRC_DIR}/build )
 
 add_subdirectory( # Specifies the directory of the CMakeLists.txt file.

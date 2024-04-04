@@ -1,6 +1,6 @@
 [submodule "app/opencv"]
-	path = app/opencv
+	path = app/jni/opencv
 	url = https://github.com/opencv/opencv.git
 [submodule "app/PaddleLite"]
-	path = app/PaddleLite
+	path = app/jni/Paddle-Lite
 	url = https://github.com/PaddlePaddle/Paddle-Lite.git
