@@ -1,0 +1,4 @@
+{
+	"dotnet.defaultSolution": "disable",
+	"java.configuration.updateBuildConfiguration": "disabled"
+}

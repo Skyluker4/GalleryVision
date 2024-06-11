@@ -10,10 +10,17 @@ cmake_minimum_required(VERSION 3.4.1)
 # CMake builds them for you. Gradle automatically packages shared libraries with
 # your APK.
 
-set(PaddleLite_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../../PaddleLite")
-include_directories(${PaddleLite_DIR}/cxx/include)
+set(PaddleLite_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../../jni/Paddle-Lite")
 
-set(OpenCV_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../../OpenCV/sdk/native/jni")
+if(${ANDROID_ABI} STREQUAL "armeabi-v7a")
+    set(PaddleLite_OUT_DIR "${PaddleLite_DIR}/build.lite.android.armv7.gcc/inference_lite_lib.android.armv7.nnadapter")
+elseif(${ANDROID_ABI} STREQUAL "arm64-v8a")
+    set(PaddleLite_OUT_DIR "${PaddleLite_DIR}/build.lite.android.armv8.gcc/inference_lite_lib.android.armv8.nnadapter")
+endif()
+
+include_directories(${PaddleLite_OUT_DIR}/cxx/include)
+
+set(OpenCV_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../../jniLibs/OpenCV/OpenCV-android-sdk/sdk/native/jni")
 message(STATUS "opencv dir: ${OpenCV_DIR}")
 find_package(OpenCV REQUIRED)
 message(STATUS "OpenCV libraries: ${OpenCV_LIBS}")
@@ -21,10 +28,10 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 aux_source_directory(. SOURCES)
 set(CMAKE_CXX_FLAGS
         "${CMAKE_CXX_FLAGS} -ffast-math -Ofast -Os"
-        )
+)
 set(CMAKE_CXX_FLAGS
         "${CMAKE_CXX_FLAGS} -fvisibility=hidden -fvisibility-inlines-hidden -fdata-sections -ffunction-sections"
-        )
+)
 set(CMAKE_SHARED_LINKER_FLAGS
         "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--gc-sections -Wl,-z,nocopyreloc")
 
@@ -42,20 +49,24 @@ find_library(
         # Specifies the name of the NDK library that you want CMake to locate.
         log)
 
-set( PADDLE_LITE_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../../PaddleLite" )
-set( PADDLE_LITE_BUILD_DIR ${PADDLE_LITE_SRC_DIR}/build )
-
-add_subdirectory( # Specifies the directory of the CMakeLists.txt file.
-        ${lib_src_DIR}
-
-        # Specifies the directory for the build outputs.
-        ${lib_build_DIR} )
-
 add_library(
         # Sets the name of the library.
         paddle_light_api_shared
         # Sets the library as a shared library.
-        SHARED)
+        SHARED
+        # Provides a relative path to your source file(s).
+        IMPORTED)
+
+set_target_properties(
+        # Specifies the target library.
+        paddle_light_api_shared
+        # Specifies the parameter you want to define.
+        PROPERTIES
+        IMPORTED_LOCATION
+        ${PaddleLite_OUT_DIR}/cxx/lib/libpaddle_light_api_shared.so
+        # Provides the path to the library you want to import.
+)
+
 
 # Specifies libraries CMake should link to your target library. You can link
 # multiple libraries, such as libraries you define in this build script,
@@ -77,31 +88,37 @@ add_custom_command(
         POST_BUILD
         COMMAND
         ${CMAKE_COMMAND} -E copy
-        ${PaddleLite_DIR}/cxx/libs/${ANDROID_ABI}/libc++_shared.so
+        ${OpenCV_DIR}/../../../../build_java_shared/aar_unzipped/jni/${ANDROID_ABI}/libc++_shared.so
         ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libc++_shared.so)
 
-
-
 add_custom_command(
         TARGET Native
         POST_BUILD
         COMMAND
         ${CMAKE_COMMAND} -E copy
-        ${PaddleLite_DIR}/cxx/libs/${ANDROID_ABI}/libhiai.so
-        ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libhiai.so)
+        ${PaddleLite_OUT_DIR}/cxx/lib/libpaddle_light_api_shared.so
+        ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libpaddle_light_api_shared.so)
 
-add_custom_command(
-        TARGET Native
-        POST_BUILD
-        COMMAND
-        ${CMAKE_COMMAND} -E copy
-        ${PaddleLite_DIR}/cxx/libs/${ANDROID_ABI}/libhiai_ir.so
-        ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libhiai_ir.so)
+#add_custom_command(
+#        TARGET Native
+#        POST_BUILD
+#        COMMAND
+#        ${CMAKE_COMMAND} -E copy
+#        ${PaddleLite_OUT_DIR}/cxx/lib/libhiai.so
+#        ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libhiai.so)
 
-add_custom_command(
-        TARGET Native
-        POST_BUILD
-        COMMAND
-        ${CMAKE_COMMAND} -E copy
-        ${PaddleLite_DIR}/cxx/libs/${ANDROID_ABI}/libhiai_ir_build.so
-        ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libhiai_ir_build.so)
+#add_custom_command(
+#        TARGET Native
+#        POST_BUILD
+#        COMMAND
+#        ${CMAKE_COMMAND} -E copy
+#        ${PaddleLite_OUT_DIR}/cxx/lib/libhiai_ir.so
+#        ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libhiai_ir.so)
+
+#add_custom_command(
+#        TARGET Native
+#        POST_BUILD
+#        COMMAND
+#        ${CMAKE_COMMAND} -E copy
+#        ${PaddleLite_OUT_DIR}/cxx/lib/libhiai_ir_build.so
+#        ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libhiai_ir_build.so)

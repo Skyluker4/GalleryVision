@@ -2,5 +2,15 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/jni/Paddle-Lite" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/jni/Paddle-Lite/third-party/gflags" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/jni/Paddle-Lite/third-party/glog" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/jni/Paddle-Lite/third-party/googletest" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/jni/Paddle-Lite/third-party/protobuf-host" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/jni/Paddle-Lite/third-party/protobuf-host/third_party/benchmark" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/jni/Paddle-Lite/third-party/protobuf-mobile" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/jni/Paddle-Lite/third-party/protobuf-mobile/third_party/benchmark" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/jni/Paddle-Lite/third-party/pybind" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/jni/opencv" vcs="Git" />
   </component>
 </project>
