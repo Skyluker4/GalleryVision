@@ -10,7 +10,6 @@ import android.util.Log
 import java.io.File
 import java.util.Date
 import java.util.Vector
-import kotlin.concurrent.Volatile
 
 class Predictor {
     var isLoaded: Boolean = false
@@ -39,7 +38,6 @@ class Predictor {
         }
     private var outputImage: Bitmap? = null
 
-    @Volatile
     var outputResult: String = ""
 
     fun init(
