@@ -14,10 +14,10 @@ set(PaddleLite_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../../jni/Paddle-Lite")
 
 if(${ANDROID_ABI} STREQUAL "armeabi-v7a")
     # Debug
-    #set(PaddleLite_OUT_DIR "${PaddleLite_DIR}/build.lite.android.armv7.clang/inference_lite_lib.android.armv7.nnadapter")
+    set(PaddleLite_OUT_DIR "${PaddleLite_DIR}/build.lite.android.armv7.clang/inference_lite_lib.android.armv7.nnadapter")
 
     # Release
-    set(PaddleLite_OUT_DIR "${PaddleLite_DIR}/build.lite.android.armv7.gcc/inference_lite_lib.android.armv7.nnadapter")
+    #set(PaddleLite_OUT_DIR "${PaddleLite_DIR}/build.lite.android.armv7.gcc/inference_lite_lib.android.armv7.nnadapter")
 elseif(${ANDROID_ABI} STREQUAL "arm64-v8a")
     set(PaddleLite_OUT_DIR "${PaddleLite_DIR}/build.lite.android.armv8.gcc/inference_lite_lib.android.armv8.nnadapter")
 endif()
@@ -31,7 +31,11 @@ message(STATUS "OpenCV libraries: ${OpenCV_LIBS}")
 include_directories(${OpenCV_INCLUDE_DIRS})
 aux_source_directory(. SOURCES)
 set(CMAKE_CXX_FLAGS
-        "${CMAKE_CXX_FLAGS} -ffast-math -Ofast"
+        # Debug
+        "${CMAKE_CXX_FLAGS} -Og -g"
+
+        # Release
+        #"${CMAKE_CXX_FLAGS} -ffast-math -Ofast"
 )
 set(CMAKE_CXX_FLAGS
         "${CMAKE_CXX_FLAGS} -fvisibility=hidden -fvisibility-inlines-hidden -fdata-sections -ffunction-sections"
