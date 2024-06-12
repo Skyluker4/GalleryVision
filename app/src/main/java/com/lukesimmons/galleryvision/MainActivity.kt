@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity() {
         val bmp = BitmapFactory.decodeStream(`in`)
         cur_predict_image = bmp
 
-        if (predictor.isLoaded()) {
+        if (predictor.isLoaded) {
             predictor.releaseModel()
         }
 
@@ -50,7 +50,7 @@ class MainActivity : ComponentActivity() {
         )
 
         if (loadSuccess) {
-            predictor.setInputImage(cur_predict_image)
+            predictor.inputImage = cur_predict_image
 
             val runSuccess = predictor.runModel(1, 1, 1)
 
