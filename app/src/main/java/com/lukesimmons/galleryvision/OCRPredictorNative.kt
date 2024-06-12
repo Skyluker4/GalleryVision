@@ -4,7 +4,7 @@ import android.graphics.Bitmap
 import android.util.Log
 import java.util.concurrent.atomic.AtomicBoolean
 
-class OCRPredictorNative(private val config: Config) {
+class OCRPredictorNative(config: Config) {
     private var nativePointer: Long = 0
 
     init {
@@ -23,14 +23,14 @@ class OCRPredictorNative(private val config: Config) {
 
     fun runImage(
         originalImage: Bitmap?,
-        max_size_len: Int,
-        run_det: Int,
-        run_cls: Int,
-        run_rec: Int
+        maxSizeLen: Int,
+        runDet: Int,
+        runCls: Int,
+        runRec: Int
     ): ArrayList<OcrResultModel> {
         Log.i("OCRPredictorNative", "begin to run image ")
         val rawResults =
-            forward(nativePointer, originalImage, max_size_len, run_det, run_cls, run_rec)
+            forward(nativePointer, originalImage, maxSizeLen, runDet, runCls, runRec)
         val results = postprocess(rawResults)
         return results
     }
@@ -44,14 +44,14 @@ class OCRPredictorNative(private val config: Config) {
         var clsModelFilename: String? = null
     }
 
-    fun destory() {
+    fun destroy() {
         if (nativePointer != 0L) {
             release(nativePointer)
             nativePointer = 0
         }
     }
 
-    protected external fun init(
+    private external fun init(
         detModelPath: String?,
         recModelPath: String?,
         clsModelPath: String?,
@@ -60,26 +60,26 @@ class OCRPredictorNative(private val config: Config) {
         cpuMode: String?
     ): Long
 
-    protected external fun forward(
+    private external fun forward(
         pointer: Long,
         originalImage: Bitmap?,
-        max_size_len: Int,
-        run_det: Int,
-        run_cls: Int,
-        run_rec: Int
+        maxSizeLen: Int,
+        runDet: Int,
+        runCls: Int,
+        runRec: Int
     ): FloatArray
 
-    protected external fun release(pointer: Long)
+    private external fun release(pointer: Long)
 
     private fun postprocess(raw: FloatArray): ArrayList<OcrResultModel> {
         val results = ArrayList<OcrResultModel>()
         var begin = 0
 
         while (begin < raw.size) {
-            val point_num = Math.round(raw[begin])
-            val word_num = Math.round(raw[begin + 1])
-            val res = parse(raw, begin + 2, point_num, word_num)
-            begin += 2 + 1 + point_num * 2 + word_num + 2
+            val pointNum = Math.round(raw[begin])
+            val wordNum = Math.round(raw[begin + 1])
+            val res = parse(raw, begin + 2, pointNum, wordNum)
+            begin += 2 + 1 + pointNum * 2 + wordNum + 2
             results.add(res)
         }
 

@@ -17,19 +17,19 @@ class Predictor {
         get() {
             return paddlePredictor != null && field
         }
-    var warmupIterNum: Int = 1
-    var inferIterNum: Int = 1
-    var cpuThreadNum: Int = 4
-    var cpuPowerMode: String = "LITE_POWER_HIGH"
-    var modelPath: String = ""
-    var modelName: String = ""
-    protected var paddlePredictor: OCRPredictorNative? = null
-    protected var inferenceTime: Float = 0f
+    private var warmupIterNum: Int = 1
+    private var inferIterNum: Int = 1
+    private var cpuThreadNum: Int = 1
+    private var cpuPowerMode: String = "LITE_POWER_HIGH"
+    private var modelPath: String = ""
+    private var modelName: String = ""
+    private var paddlePredictor: OCRPredictorNative? = null
+    private var inferenceTime: Float = 0f
 
     // Only for object detection
-    protected var wordLabels: Vector<String> = Vector()
-    protected var detLongSize: Int = 960
-    protected var scoreThreshold: Float = 0.1f
+    private var wordLabels: Vector<String> = Vector()
+    private var detLongSize: Int = 960
+    private var scoreThreshold: Float = 0.1f
     var inputImage: Bitmap? = null
         set(image) {
             if (image == null) {
@@ -37,12 +37,10 @@ class Predictor {
             }
             field = image.copy(Bitmap.Config.ARGB_8888, true)
         }
-    protected var outputImage: Bitmap? = null
+    private var outputImage: Bitmap? = null
 
     @Volatile
-    protected var outputResult: String = ""
-    protected var postprocessTime: Float = 0f
-
+    var outputResult: String = ""
 
     fun init(
         appCtx: Context,
@@ -80,7 +78,7 @@ class Predictor {
         return true
     }
 
-    protected fun loadModel(
+    private fun loadModel(
         appCtx: Context,
         modelPath: String,
         useOpencl: Int,
@@ -127,7 +125,7 @@ class Predictor {
 
     fun releaseModel() {
         if (paddlePredictor != null) {
-            paddlePredictor!!.destory()
+            paddlePredictor!!.destroy()
             paddlePredictor = null
         }
         isLoaded = false
@@ -137,7 +135,7 @@ class Predictor {
         modelName = ""
     }
 
-    protected fun loadLabel(appCtx: Context, labelPath: String?): Boolean {
+    private fun loadLabel(appCtx: Context, labelPath: String?): Boolean {
         wordLabels.clear()
         wordLabels.add("black")
         // Load word labels from file
@@ -153,82 +151,42 @@ class Predictor {
                 wordLabels.add(content)
             }
             wordLabels.add(" ")
-            Log.i(TAG, "Word label size: " + wordLabels.size)
         } catch (e: Exception) {
-            Log.e(TAG, e.message!!)
             return false
         }
         return true
     }
 
 
-    fun runModel(run_det: Int, run_cls: Int, run_rec: Int): Boolean {
+    fun runModel(runDet: Int, runCls: Int, runRec: Int): Boolean {
         if (inputImage == null || !isLoaded) {
             return false
         }
 
         // Warm up
         for (i in 0 until warmupIterNum) {
-            paddlePredictor!!.runImage(inputImage, detLongSize, run_det, run_cls, run_rec)
+            paddlePredictor!!.runImage(inputImage, detLongSize, runDet, runCls, runRec)
         }
         warmupIterNum = 0 // do not need warm
         // Run inference
         val start = Date()
-        var results = paddlePredictor!!.runImage(inputImage, detLongSize, run_det, run_cls, run_rec)
+        var results = paddlePredictor!!.runImage(inputImage, detLongSize, runDet, runCls, runRec)
         val end = Date()
         inferenceTime = (end.time - start.time) / inferIterNum.toFloat()
 
         results = postprocess(results)
-        Log.i(TAG, "[stat] Inference Time: " + inferenceTime + " ;Box Size " + results.size)
         drawResults(results)
 
         return true
     }
 
-    fun modelPath(): String {
-        return modelPath
-    }
-
-    fun modelName(): String {
-        return modelName
-    }
-
-    fun cpuThreadNum(): Int {
-        return cpuThreadNum
-    }
-
-    fun cpuPowerMode(): String {
-        return cpuPowerMode
-    }
-
-    fun inferenceTime(): Float {
-        return inferenceTime
-    }
-
-    fun inputImage(): Bitmap? {
-        return inputImage
-    }
-
-    fun outputImage(): Bitmap? {
-        return outputImage
-    }
-
-    fun outputResult(): String {
-        return outputResult
-    }
-
-    fun postprocessTime(): Float {
-        return postprocessTime
-    }
-
     private fun postprocess(results: ArrayList<OcrResultModel>): ArrayList<OcrResultModel> {
-        for (r in results!!) {
+        for (r in results) {
             val word = StringBuffer()
-            for (index in r!!.getWordIndex()) {
+            for (index in r.getWordIndex()) {
                 if (index >= 0 && index < wordLabels.size) {
                     word.append(wordLabels[index])
                 } else {
-                    Log.e(TAG, "Word index is not in label list:$index")
                     word.append("×")
                 }
             }
@@ -240,13 +198,13 @@ class Predictor {
 
     private fun drawResults(results: ArrayList<OcrResultModel>) {
         val outputResultSb = StringBuffer("")
-        for (i in results!!.indices) {
+        for (i in results.indices) {
             val result = results[i]
             val sb = StringBuilder("")
-            if (result!!.getPoints().size > 0) {
+            if (result.getPoints().isNotEmpty()) {
                 sb.append("Det: ")
                 for (p in result.getPoints()) {
-                    sb.append("(").append(p!!.x).append(",").append(p.y).append(") ")
+                    sb.append("(").append(p.x).append(",").append(p.y).append(") ")
                 }
             }
             if ((result.label?.length ?: 0) > 0) {
@@ -257,7 +215,6 @@ class Predictor {
                 sb.append(" Cls: ").append(result.clsLabel)
                 sb.append(",").append(result.clsConfidence)
             }
-            Log.i(TAG, sb.toString()) // show LOG in Logcat panel
             outputResultSb.append(i + 1).append(": ").append(sb.toString()).append("\n")
         }
         outputResult = outputResultSb.toString()
@@ -275,21 +232,17 @@ class Predictor {
 
         for (result in results) {
             val path = Path()
-            val points = result!!.getPoints()
-            if (points!!.size == 0) {
+            val points = result.getPoints()
+            if (points.isEmpty()) {
                 continue
             }
-            path.moveTo(points[0]!!.x.toFloat(), points[0]!!.y.toFloat())
+            path.moveTo(points[0].x.toFloat(), points[0].y.toFloat())
             for (i in points.indices.reversed()) {
                 val p = points[i]
-                path.lineTo(p!!.x.toFloat(), p.y.toFloat())
+                path.lineTo(p.x.toFloat(), p.y.toFloat())
             }
             canvas.drawPath(path, paint)
             canvas.drawPath(path, paintFillAlpha)
         }
-    }
-
-    companion object {
-        private val TAG: String = Predictor::class.java.simpleName
     }
 }
