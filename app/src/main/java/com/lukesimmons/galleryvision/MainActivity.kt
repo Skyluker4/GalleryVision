@@ -38,7 +38,7 @@ class MainActivity : ComponentActivity() {
             predictor.releaseModel()
         }
 
-        val success = predictor.init(
+        val loadSuccess = predictor.init(
             this@MainActivity,
             modelPath,
             labelPath,
@@ -49,7 +49,17 @@ class MainActivity : ComponentActivity() {
             scoreThreshold
         )
 
-        println("Model loaded: $success")
+        if (loadSuccess) {
+            predictor.setInputImage(cur_predict_image)
+
+            val runSuccess = predictor.runModel(1, 1, 1)
+
+            println("Model ran: $runSuccess")
+            if (runSuccess) {
+                println("Time to run:" + predictor.postprocessTime())
+                println("Output:" + predictor.outputResult())
+            }
+        }
 
         setContent {
             GalleryVisionTheme {
@@ -59,6 +69,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        predictor.releaseModel()
+        super.onDestroy()
     }
 }
 

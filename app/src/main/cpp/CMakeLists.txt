@@ -31,7 +31,7 @@ message(STATUS "OpenCV libraries: ${OpenCV_LIBS}")
 include_directories(${OpenCV_INCLUDE_DIRS})
 aux_source_directory(. SOURCES)
 set(CMAKE_CXX_FLAGS
-        "${CMAKE_CXX_FLAGS} -ffast-math -Ofast -Os"
+        "${CMAKE_CXX_FLAGS} -ffast-math -Ofast"
 )
 set(CMAKE_CXX_FLAGS
         "${CMAKE_CXX_FLAGS} -fvisibility=hidden -fvisibility-inlines-hidden -fdata-sections -ffunction-sections"
