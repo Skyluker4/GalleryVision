@@ -22,6 +22,7 @@ Java_com_lukesimmons_galleryvision_OCRPredictorNative_init(
   std::string cpu_mode = jstring_to_cpp_string(env, j_cpu_mode);
   ppredictor::OCR_Config conf;
   conf.use_opencl = j_use_opencl;
+  conf.use_nnadapter = 1;
   conf.thread_num = thread_num;
   conf.mode = str_to_cpu_mode(cpu_mode);
   ppredictor::OCR_PPredictor *orc_predictor =

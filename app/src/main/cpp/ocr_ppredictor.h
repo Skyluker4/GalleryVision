@@ -16,6 +16,7 @@ namespace ppredictor {
  */
 struct OCR_Config {
     int use_opencl = 0;
+    int use_nnadapter = 0;
     int thread_num = 4; // Thread num
   paddle::lite_api::PowerMode mode =
       paddle::lite_api::LITE_POWER_HIGH; // PaddleLite Mode

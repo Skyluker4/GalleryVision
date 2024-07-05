@@ -106,3 +106,19 @@ add_custom_command(
         ${CMAKE_COMMAND} -E copy
         ${PaddleLite_OUT_DIR}/cxx/lib/libpaddle_light_api_shared.so
         ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libpaddle_light_api_shared.so)
+
+add_custom_command(
+        TARGET Native
+        POST_BUILD
+        COMMAND
+        ${CMAKE_COMMAND} -E copy
+        ${PaddleLite_OUT_DIR}/cxx/lib/libnnadapter.so
+        ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libnnadapter.so)
+
+add_custom_command(
+        TARGET Native
+        POST_BUILD
+        COMMAND
+        ${CMAKE_COMMAND} -E copy
+        ${PaddleLite_OUT_DIR}/cxx/lib/libandroid_nnapi.so
+        ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libandroid_nnapi.so)

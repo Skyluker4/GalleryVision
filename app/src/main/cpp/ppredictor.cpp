@@ -2,9 +2,9 @@
 #include "common.h"
 
 namespace ppredictor {
-PPredictor::PPredictor(int use_opencl, int thread_num, int net_flag,
+PPredictor::PPredictor(int use_opencl, int use_nnadapter, int thread_num, int net_flag,
                        paddle::lite_api::PowerMode mode)
-    : _use_opencl(use_opencl), _thread_num(thread_num), _net_flag(net_flag), _mode(mode) {}
+    : _use_opencl(use_opencl), _use_nnadapter(use_nnadapter), _thread_num(thread_num), _net_flag(net_flag), _mode(mode) {}
 
 int PPredictor::init_nb(const std::string &model_content) {
   paddle::lite_api::MobileConfig config;
@@ -19,9 +19,7 @@ int PPredictor::init_from_file(const std::string &model_content) {
 }
 
 template <typename ConfigT> int PPredictor::_init(ConfigT &config) {
-  bool is_opencl_backend_valid = paddle::lite_api::IsOpenCLBackendValid(/*check_fp16_valid = false*/);
-  if (is_opencl_backend_valid) {
-    if (_use_opencl != 0) {
+  if (_use_opencl != 0 && paddle::lite_api::IsOpenCLBackendValid(/*check_fp16_valid = false*/)) {
       // Make sure you have write permission of the binary path.
       // We strongly recommend each model has a unique binary name.
       const std::string bin_path = "/data/local/tmp/";
@@ -43,8 +41,22 @@ template <typename ConfigT> int PPredictor::_init(ConfigT &config) {
       // CL_PRECISION_FP16: 2, force fp16
       config.set_opencl_precision(paddle::lite_api::CL_PRECISION_FP32);
       LOGI("ocr cpp device: running on gpu.");
-    }
-  } else {
+  } else if (_use_nnadapter != 0) {
+      for (auto& dev : config.nnadapter_device_names()) {
+        LOGI("ocr cpp device: nnadapter device: %s", dev.c_str());
+      }
+      std::string s = "android_nnapi";
+      std::vector<std::string> names = std::vector<std::string>();
+      names.push_back(s);
+      config.set_nnadapter_device_names(names);
+
+      for (auto& dev : config.nnadapter_device_names()) {
+          LOGI("ocr cpp device after add: nnadapter device: %s", dev.c_str());
+      }
+
+      LOGI("ocr cpp device: running on nnadapter.");
+  }
+  else {
     LOGI("ocr cpp device: running on cpu.");
     // you can give backup cpu nb model instead
     // config.set_model_from_file(cpu_nb_model_dir);
