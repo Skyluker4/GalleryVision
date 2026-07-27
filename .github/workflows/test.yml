@@ -70,8 +70,8 @@ jobs:
           api-level: 36
           arch: x86_64
           profile: pixel_6
-          # Only :app and :inference have androidTest sources + the test runner.
-          script: ./gradlew :app:connectedDebugAndroidTest :inference:connectedDebugAndroidTest --stacktrace
+          # Only these modules have androidTest sources + the test runner.
+          script: ./gradlew :app:connectedDebugAndroidTest :inference:connectedDebugAndroidTest :feature:video:connectedDebugAndroidTest --stacktrace
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
