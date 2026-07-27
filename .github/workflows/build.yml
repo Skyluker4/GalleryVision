@@ -65,7 +65,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           TAG: ${{ github.ref_name }}
-        run: gh release create "$TAG" dist/**/*.apk dist/**/*.aab --generate-notes
+        run: gh release create "$TAG" $(find dist -type f -name '*.apk') $(find dist -type f -name '*.aab') --generate-notes
 
   dev-release:
     name: Create GitHub Pre-Release
@@ -92,7 +92,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
           SHA: ${{ github.sha }}
         run: |
-          gh release create latest dist/**/*.apk \
+          gh release create latest $(find dist -type f -name '*.apk') \
             --target "$SHA" \
             --title "Development Build" \
             --notes "Latest build from the main branch. Automated pre-release; may be unstable." \

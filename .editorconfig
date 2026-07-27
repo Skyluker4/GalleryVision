@@ -13,6 +13,9 @@ indent_size = 4
 [*.{kt,kts}]
 # Compose uses PascalCase @Composable factory functions by convention.
 ktlint_function_naming_ignore_when_annotated_with = Composable
+# Newer ktlint when-branch rules are too pedantic for this codebase.
+ktlint_standard_blank-line-between-when-conditions = disabled
+ktlint_standard_when-entry-bracing = disabled
 
 [*.md]
 trim_trailing_whitespace = false
