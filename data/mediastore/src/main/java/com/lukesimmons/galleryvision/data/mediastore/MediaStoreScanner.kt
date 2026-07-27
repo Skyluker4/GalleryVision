@@ -26,9 +26,18 @@ class MediaStoreScanner(private val context: Context) {
         val lower = path.lowercase()
         return when {
             lower.endsWith(".gif") -> MediaType.GIF
-            lower.endsWith(".apng") || lower.endsWith(".webp") -> MediaType.ANIMATED
+            lower.endsWith(".apng") -> MediaType.ANIMATED
+            lower.endsWith(".png") ->
+                if (sniffsAs(path, AnimatedSniff::isApng)) MediaType.ANIMATED else MediaType.IMAGE
+            lower.endsWith(".webp") ->
+                if (sniffsAs(path, AnimatedSniff::isAnimatedWebP)) MediaType.ANIMATED else MediaType.IMAGE
             else -> MediaType.IMAGE
         }
+    }
+
+    private fun sniffsAs(path: String, test: (ByteArray, Int) -> Boolean): Boolean {
+        val (buf, n) = AnimatedSniff.readHeader(path) ?: return false
+        return test(buf, n)
     }
 
     fun scan(generation: Long): ScanResult {

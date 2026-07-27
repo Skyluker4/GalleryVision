@@ -162,13 +162,25 @@ inverse used when editing a box back to canonical image coords. Round-trip toler
 ---
 
 ## 6. Video (C-none, D5, R7)
-- libmpv via `:feature:video`: reuse mpv-android `MPVLib`/`BaseMPVView` JNI pattern (source-adapted,
-  not an AAR). **LGPL compliance:** dynamically linked `libmpv.so`/ffmpeg built **without
-  `--enable-gpl`** (LGPL-2.1+ only), third-party notices + relink offer shipped (M0 legal/build spike).
+- libmpv via `:feature:video`: **prebuilt AAR `dev.jdtech.mpv:libmpv:1.0.0`** (Maven Central, 4 ABIs,
+  maintained; source: https://github.com/jarnedemeulemeester/libmpv-android). Amends the earlier
+  "source-adapted, not an AAR" note: the AAR already provides the `MPVLib` JNI bridge +
+  `libmpv.so`/ffmpeg shared libs, so no vendored Java/JNI is needed. Building our own .so from
+  source (pinned fork commit, patched build flags) remains a publish-gate option (see §7).
+- **License reality (research-corrected):** mpv core is **GPLv2+ by default** (LGPLv2.1+ only with
+  `-Dgpl=false`) and the AAR's ffmpeg is built with `--enable-gpl,version3` → the bundled native
+  stack is GPL, not LGPL. This is compatible with our AGPL-3.0-only app (GPL-2.0+ → GPL-3.0 →
+  AGPL §13; same posture as VLC). Obligations met via `NOTICE` provenance (exact coordinates +
+  build-script source). If a weaker-copyleft native stack is ever wanted, rebuild mpv with
+  `-Dgpl=false` and ffmpeg without `--enable-gpl`/`--enable-nonfree`.
 - Compose gesture layer (mpvKt reference, Apache-2.0): horizontal drag = seek/scrub, vertical
   left = brightness, vertical right = volume, pinch = zoom, double-tap = play/pause.
-- GIF/APNG/animated routed to libmpv (ffmpeg gif/apng demuxers) and looped; static images use Coil.
-- Common settings + user `mpv.conf` override via settings editor.
+- GIF/APNG/animated routed to libmpv (ffmpeg gif/apng demuxers) and looped (`loop-file=inf`,
+  `demuxer-lavf-o=ignore_loop=0`); static images use Coil. **APNG/animated-WebP are classified by
+  content sniffing** (`AnimatedSniff`: `acTL` before first `IDAT`; `ANIM` RIFF chunk), because
+  MediaStore reports them as image/png and image/webp.
+- Common settings + user `mpv.conf` override via settings editor (`SettingsStore.mpvConfig`,
+  parsed `key=value` lines applied as mpv options before init).
 - **Supported media formats (R4/R7):**
   - *Still images* (Android `ImageDecoder` + Coil): JPEG, PNG, WebP (lossy/lossless + animated),
     HEIF/HEIC (API 28+), AVIF (API 31+ natively; API < 31 via bundled `libavif`, BSD-2), BMP, ICO,
@@ -184,9 +196,9 @@ inverse used when editing a box back to canonical image coords. Round-trip toler
 
 ## 7. Licensing (R11), CI/CD (R12), Versions (R9)
 - **License:** `LICENSE` = AGPL-3.0-only; SPDX + copyright header in every file; `NOTICE`/`licenses/`
-  for NCNN(BSD-3), ONNX RT(MIT), MediaPipe(Apache-2.0), Coil(Apache-2.0), mpv/ffmpeg(LGPL-2.1+),
-  model licenses. F-Droid metadata; no non-free deps/models; document on-device (no server) so AGPL
-  source-offer is met by the public repo.
+  for NCNN(BSD-3), ONNX RT(MIT), MediaPipe(Apache-2.0), Coil(Apache-2.0), **mpv/ffmpeg(GPLv2+/GPLv3
+  per the libmpv-android build config — see §6)**, model licenses. F-Droid metadata; no non-free
+  deps/models; document on-device (no server) so AGPL source-offer is met by the public repo.
 - **CI (SHA-pinned, ubuntu-24.04):** `dependabot.yml` (gradle + github-actions + docker, daily,
   `cooldown.default-days: 7`); `lint.yml` (super-linter v8.6.0 `9e863354...`, checkout v6.0.2
   `de0fac2e...`, ktlint + clang-format, exclude submodules/generated); `test.yml` (unit+Kover, native

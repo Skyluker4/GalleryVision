@@ -29,4 +29,5 @@ dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:database"))
     implementation(libs.kotlinx.coroutines.android)
+    testImplementation(libs.kotlin.test.junit)
 }

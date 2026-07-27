@@ -33,8 +33,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.lukesimmons.galleryvision.core.model.MediaType
 import com.lukesimmons.galleryvision.feature.faces.PeopleScreen
 import com.lukesimmons.galleryvision.feature.library.LibraryScreen
+import com.lukesimmons.galleryvision.feature.video.VideoScreen
 import com.lukesimmons.galleryvision.feature.viewer.ViewerScreen
 import com.lukesimmons.galleryvision.ui.theme.GalleryVisionTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -69,7 +71,11 @@ fun AppNavHost() {
     NavHost(navController = navController, startDestination = "library") {
         composable("library") {
             LibraryScreen(
-                onMediaClick = { id -> navController.navigate("viewer/$id") },
+                onMediaClick = { media ->
+                    // Videos and animated formats play through libmpv; stills use the detection viewer.
+                    val route = if (media.type == MediaType.IMAGE) "viewer" else "video"
+                    navController.navigate("$route/${media.id}")
+                },
                 onPeopleClick = { navController.navigate("people") },
             )
         }
@@ -81,6 +87,12 @@ fun AppNavHost() {
             arguments = listOf(navArgument("mediaId") { type = NavType.LongType }),
         ) { backStackEntry ->
             ViewerScreen(mediaId = backStackEntry.arguments?.getLong("mediaId") ?: 0L)
+        }
+        composable(
+            route = "video/{mediaId}",
+            arguments = listOf(navArgument("mediaId") { type = NavType.LongType }),
+        ) { backStackEntry ->
+            VideoScreen(mediaId = backStackEntry.arguments?.getLong("mediaId") ?: 0L)
         }
     }
 }

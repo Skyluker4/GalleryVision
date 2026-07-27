@@ -4,6 +4,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- dev.jdtech.mpv:libmpv declares minSdk 26; app minSdk is 24. On API 24-25 the
+         video screen degrades gracefully if the native libs fail to load. -->
+    <uses-sdk tools:overrideLibrary="dev.jdtech.mpv" />
+
     <!-- Media access (scoped storage). -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />

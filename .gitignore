@@ -32,3 +32,8 @@ Notes.txt
 
 # Ignore all Gradle module build output dirs
 **/build/
+
+# Reference clones (not vendored; for M6 native-build spike)
+third-party/
+.playwright-mcp/
+*.hprof

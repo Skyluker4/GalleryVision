@@ -88,6 +88,7 @@ dependencies {
     implementation(project(":feature:library"))
     implementation(project(":feature:viewer"))
     implementation(project(":feature:faces"))
+    implementation(project(":feature:video"))
     implementation(project(":domain"))
     implementation(project(":data:index"))
     implementation(project(":data:mediastore"))

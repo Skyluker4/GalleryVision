@@ -28,6 +28,9 @@ paging = "3.3.6"
 coroutines = "1.10.2"
 kover = "0.9.1"
 ksp = "2.3.10"
+# libmpv JNI bridge + native libs (GPLv2+/GPLv3 native stack; see docs/DESIGN.md §7).
+# Source: https://github.com/jarnedemeulemeester/libmpv-android
+libmpv = "1.0.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx" }
@@ -66,6 +69,7 @@ androidx-navigation-compose = { group = "androidx.navigation", name = "navigatio
 androidx-paging-runtime = { group = "androidx.paging", name = "paging-runtime", version.ref = "paging" }
 androidx-paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "paging" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+libmpv-android = { group = "dev.jdtech.mpv", name = "libmpv", version.ref = "libmpv" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

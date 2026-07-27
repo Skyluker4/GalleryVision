@@ -1,0 +1,44 @@
+SPDX-License-Identifier: AGPL-3.0-only
+Copyright (C) 2026 Luke Simmons <luke5083@live.com>
+
+GalleryVision — third-party components and their licenses
+==========================================================
+
+GalleryVision itself is licensed under the GNU Affero General Public License
+version 3 only (AGPL-3.0-only). See LICENSE.
+
+This application bundles or depends on the following third-party components.
+
+libmpv + FFmpeg (video playback engine)
+---------------------------------------
+Component: dev.jdtech.mpv:libmpv:1.0.0 (AAR, Maven Central)
+Source:    https://github.com/jarnedemeulemeester/libmpv-android
+Upstream:  https://github.com/mpv-player/mpv , https://www.ffmpeg.org
+License:   mpv core is GPLv2-or-later by default; the AAR's FFmpeg is built with
+           --enable-gpl and --enable-version3 (GPLv2+/GPLv3). The libmpv client
+           API (client.h) is ISC. The JNI bridge in mpv-android is MIT
+           (Copyright (c) 2016 Ilya Zhuravlev, sfan5).
+           GPL components are combined with this AGPL-3.0-only application under
+           GPL-3.0/AGPL-3.0 compatibility (AGPL §13). Corresponding source for
+           the native libraries is available at the repository above; the exact
+           build scripts and configure flags are in its buildscripts/ directory.
+
+ONNX Runtime Mobile (OCR / face / object inference)
+---------------------------------------------------
+Component: com.microsoft.onnxruntime:onnxruntime-android:1.27.0
+Source:    https://github.com/microsoft/onnxruntime
+License:   MIT
+
+Machine-learning models (bundled in app assets)
+-----------------------------------------------
+- PP-OCRv5 mobile detection + recognition (PaddleOCR)
+  https://github.com/PaddlePaddle/PaddleOCR — Apache-2.0
+- YuNet face detection + SFace face recognition (OpenCV Zoo)
+  https://github.com/opencv/opencv_zoo — Apache-2.0 (see upstream per-model notes)
+- PP-PicoDet-S object detection (PaddleDetection, COCO-80)
+  https://github.com/PaddlePaddle/PaddleDetection — Apache-2.0
+
+Android libraries
+-----------------
+Jetpack (Compose, Room, WorkManager, Hilt, DataStore, Navigation, Paging),
+Coil 3, Kotlin coroutines — Apache-2.0.

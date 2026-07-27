@@ -47,7 +47,7 @@ import com.lukesimmons.galleryvision.core.model.SortSpec
 /** Media grid with a search bar (R8 boolean/wildcard/regex/field search) and sort control. */
 @Composable
 fun LibraryScreen(
-    onMediaClick: (Long) -> Unit,
+    onMediaClick: (MediaEntity) -> Unit,
     onPeopleClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: LibraryViewModel = hiltViewModel(),
@@ -196,7 +196,7 @@ private fun sortLabel(sort: SortSpec?): String =
     if (sort == null) "Sort" else sortOptions().firstOrNull { it.second == sort }?.first ?: "Sort"
 
 @Composable
-private fun MediaGrid(media: List<MediaEntity>, onMediaClick: (Long) -> Unit) {
+private fun MediaGrid(media: List<MediaEntity>, onMediaClick: (MediaEntity) -> Unit) {
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 120.dp),
         modifier = Modifier.fillMaxSize(),
@@ -211,12 +211,12 @@ private fun MediaGrid(media: List<MediaEntity>, onMediaClick: (Long) -> Unit) {
 }
 
 @Composable
-private fun MediaCard(media: MediaEntity, onMediaClick: (Long) -> Unit) {
+private fun MediaCard(media: MediaEntity, onMediaClick: (MediaEntity) -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(1f)
-            .clickable { onMediaClick(media.id) },
+            .clickable { onMediaClick(media) },
     ) {
         AsyncImage(
             model = media.sourceUri,
