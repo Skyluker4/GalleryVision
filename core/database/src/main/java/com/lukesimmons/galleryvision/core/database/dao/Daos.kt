@@ -127,11 +127,23 @@ interface DetectionDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun update(detection: DetectionEntity)
 
-    @Query("SELECT fc.name FROM detection d JOIN face_cluster fc ON fc.id = d.clusterId WHERE d.mediaId = :mediaId AND d.kind = 'FACE'")
+    @Query(
+        "SELECT fc.name FROM detection d JOIN face_cluster fc ON fc.id = d.clusterId" +
+            " WHERE d.mediaId = :mediaId AND d.kind = 'FACE' AND fc.name IS NOT NULL",
+    )
     suspend fun faceNamesFor(mediaId: Long): List<String>
 
     @Query("SELECT * FROM detection WHERE kind = 'FACE' AND embedding IS NOT NULL")
     suspend fun facesWithEmbeddings(): List<DetectionEntity>
+
+    @Query("SELECT * FROM detection")
+    suspend fun allDetections(): List<DetectionEntity>
+
+    @Query(
+        "SELECT d.mediaId, fc.name FROM detection d JOIN face_cluster fc ON fc.id = d.clusterId" +
+            " WHERE d.kind = 'FACE' AND fc.name IS NOT NULL",
+    )
+    suspend fun allFaceNames(): List<MediaFaceName>
 
     @Query("UPDATE detection SET clusterId = :clusterId WHERE id = :id")
     suspend fun assignCluster(
@@ -159,6 +171,9 @@ interface NoteDao {
 
     @Query("DELETE FROM note WHERE id = :id")
     suspend fun delete(id: Long)
+
+    @Query("SELECT * FROM note WHERE targetKind = 'MEDIA'")
+    suspend fun allMediaNotes(): List<NoteEntity>
 }
 
 @Dao
@@ -189,7 +204,22 @@ interface TagDao {
 
     @Query("SELECT t.name FROM media_tag mt JOIN tag t ON t.id = mt.tagId WHERE mt.mediaId = :mediaId ORDER BY t.name")
     fun tagNamesFlowFor(mediaId: Long): Flow<List<String>>
+
+    @Query("SELECT mt.mediaId, t.name FROM media_tag mt JOIN tag t ON t.id = mt.tagId")
+    suspend fun allMediaTagNames(): List<MediaTagName>
 }
+
+/** (mediaId, tag name) projection for batched search field loading. */
+data class MediaTagName(
+    val mediaId: Long,
+    val name: String,
+)
+
+/** (mediaId, face cluster name) projection for batched search field loading. */
+data class MediaFaceName(
+    val mediaId: Long,
+    val name: String,
+)
 
 @Dao
 interface FaceClusterDao {

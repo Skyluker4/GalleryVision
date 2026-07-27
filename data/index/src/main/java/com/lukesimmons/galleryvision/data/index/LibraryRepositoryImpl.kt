@@ -196,10 +196,52 @@ class LibraryRepositoryImpl(
                         .first()
                         .map { it.value.lowercase() }
                         .toSet()
+                // Batch-load all field values once (5 queries) instead of 4 per media row;
+                // the per-row variant made regex/wildcard search O(N x 4) and unusable at scale.
+                val allDets = db.detectionDao().allDetections()
+                val textsByMedia =
+                    allDets
+                        .filter { it.kind == DetectionKind.TEXT }
+                        .groupBy({ it.mediaId }, { it.valueText })
+                        .mapValues { (_, v) -> v.filterNotNull() }
+                val objectsByMedia =
+                    allDets
+                        .filter { it.kind == DetectionKind.OBJECT && it.label?.lowercase() !in deniedObjects }
+                        .groupBy({ it.mediaId }, { it.label })
+                        .mapValues { (_, v) -> v.filterNotNull() }
+                val facesByMedia =
+                    db
+                        .detectionDao()
+                        .allFaceNames()
+                        .groupBy({ it.mediaId }, { it.name })
+                        .mapValues { (_, v) -> v.filter { it.lowercase() !in deniedFaces } }
+                val tagsByMedia =
+                    db
+                        .tagDao()
+                        .allMediaTagNames()
+                        .groupBy({ it.mediaId }, { it.name })
+                        .mapValues { (_, v) -> v.filter { it.lowercase() !in deniedTags } }
+                val notesByMedia =
+                    db
+                        .noteDao()
+                        .allMediaNotes()
+                        .groupBy({ it.targetId }, { it.body })
                 val matched =
                     db.mediaDao().getAllList().mapNotNull { media ->
                         if (!policyVisible(media.folderId, policies, allowOnly)) return@mapNotNull null
-                        val fv = buildFieldValues(media, deniedObjects, deniedFaces, deniedTags)
+                        val fv =
+                            FieldValues(
+                                path = media.path,
+                                created = media.dateCreated,
+                                modified = media.dateModified,
+                                added = media.dateAdded,
+                                taken = media.dateTaken,
+                                texts = textsByMedia[media.id] ?: emptyList(),
+                                tags = tagsByMedia[media.id] ?: emptyList(),
+                                objects = objectsByMedia[media.id] ?: emptyList(),
+                                faces = facesByMedia[media.id] ?: emptyList(),
+                                notes = notesByMedia[media.id] ?: emptyList(),
+                            )
                         if (SearchEvaluator.matches(spec, fv)) media to fv else null
                     }
                 val sorted =
@@ -234,39 +276,5 @@ class LibraryRepositoryImpl(
     ): Boolean {
         val mode = folderId?.let { policies[it] }
         return if (allowOnly) mode == FolderPolicyMode.ALLOW else mode != FolderPolicyMode.DENY
-    }
-
-    private suspend fun buildFieldValues(
-        media: MediaEntity,
-        deniedObjects: Set<String>,
-        deniedFaces: Set<String>,
-        deniedTags: Set<String>,
-    ): FieldValues {
-        val dets = db.detectionDao().forMedia(media.id).first()
-        return FieldValues(
-            path = media.path,
-            created = media.dateCreated,
-            modified = media.dateModified,
-            added = media.dateAdded,
-            taken = media.dateTaken,
-            texts = dets.filter { it.kind == DetectionKind.TEXT }.mapNotNull { it.valueText },
-            tags = db.tagDao().tagNamesFor(media.id).filter { it.lowercase() !in deniedTags },
-            objects =
-                dets
-                    .filter { it.kind == DetectionKind.OBJECT }
-                    .mapNotNull { it.label }
-                    .filter { it.lowercase() !in deniedObjects },
-            faces =
-                db
-                    .detectionDao()
-                    .faceNamesFor(media.id)
-                    .filter { it.lowercase() !in deniedFaces },
-            notes =
-                db
-                    .noteDao()
-                    .forTarget(NoteTargetKind.MEDIA, media.id)
-                    .first()
-                    .map { it.body },
-        )
     }
 }
