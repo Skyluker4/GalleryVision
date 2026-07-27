@@ -19,7 +19,7 @@ kotlin-test-junit = "2.0.0"
 # M1+ libraries (research-confirmed latest-stable where applicable)
 room = "2.8.4"
 hilt = "2.59.2"
-hilt-navigation-compose = "1.2.0"
+hilt-navigation-compose = "1.4.0"
 workmanager = "2.10.1"
 datastore = "1.1.7"
 coil = "3.5.0"
