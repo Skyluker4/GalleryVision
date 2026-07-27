@@ -15,7 +15,7 @@ onnxruntime = "1.27.0"
 junit-ext = "1.1.5"
 espresso = "3.5.1"
 ui-test-manifest = "1.6.7"
-kotlin-test-junit = "2.0.0"
+kotlin-test-junit = "2.4.10"
 # M1+ libraries (research-confirmed latest-stable where applicable)
 room = "2.8.4"
 hilt = "2.59.2"
