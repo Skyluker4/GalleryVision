@@ -29,7 +29,7 @@ android {
         testApplicationId = "com.lukesimmons.galleryvisiontest"
 
         ndk {
-            abiFilters += listOf("armeabi-v7a", "arm64-v8a")
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86_64")
         }
     }
 
@@ -72,13 +72,6 @@ android {
     }
 
     buildToolsVersion = "36.0.0"
-    ndkVersion = "25.2.9519653"
-
-    externalNativeBuild {
-        cmake {
-            path = file("src/main/cpp/CMakeLists.txt")
-        }
-    }
 }
 
 kotlin {
