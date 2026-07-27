@@ -38,6 +38,7 @@ import com.lukesimmons.galleryvision.feature.faces.PeopleScreen
 import com.lukesimmons.galleryvision.feature.library.FolderScreen
 import com.lukesimmons.galleryvision.feature.library.FoldersScreen
 import com.lukesimmons.galleryvision.feature.library.LibraryScreen
+import com.lukesimmons.galleryvision.feature.settings.SettingsScreen
 import com.lukesimmons.galleryvision.feature.video.VideoScreen
 import com.lukesimmons.galleryvision.feature.viewer.ViewerScreen
 import com.lukesimmons.galleryvision.ui.theme.GalleryVisionTheme
@@ -80,7 +81,11 @@ fun AppNavHost() {
                 },
                 onPeopleClick = { navController.navigate("people") },
                 onFoldersClick = { navController.navigate("folders") },
+                onSettingsClick = { navController.navigate("settings") },
             )
+        }
+        composable("settings") {
+            SettingsScreen()
         }
         composable("people") {
             PeopleScreen()

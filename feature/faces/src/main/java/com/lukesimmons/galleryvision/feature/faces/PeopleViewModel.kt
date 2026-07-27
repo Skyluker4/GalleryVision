@@ -8,12 +8,18 @@ import android.graphics.ImageDecoder
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lukesimmons.galleryvision.core.database.entity.DenyEntity
+import com.lukesimmons.galleryvision.core.model.DenyKind
 import com.lukesimmons.galleryvision.core.model.FaceClusterInfo
 import com.lukesimmons.galleryvision.domain.repository.LibraryRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -34,16 +40,27 @@ class PeopleViewModel @Inject constructor(
     private val _reclustering = MutableStateFlow(false)
     val reclustering: StateFlow<Boolean> = _reclustering
 
+    private val deniedFaces: StateFlow<Set<String>> =
+        repository.denyList(DenyKind.FACE)
+            .map { list -> list.map { it.value.lowercase() }.toSet() }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
+
     init {
         refresh()
     }
 
     fun refresh() {
         viewModelScope.launch {
-            repository.clustersWithRepresentative().collect { infos ->
+            combine(repository.clustersWithRepresentative(), deniedFaces) { infos, denied ->
+                infos.filter { info -> info.name?.lowercase() !in denied }
+            }.collect { infos ->
                 _clusters.value = infos.map { info -> ClusterUi(info, loadFaceCrop(info)) }
             }
         }
+    }
+
+    fun denyCluster(name: String) {
+        viewModelScope.launch { repository.addDeny(DenyEntity(DenyKind.FACE, name)) }
     }
 
     fun recluster() {

@@ -147,6 +147,12 @@ fun PeopleScreen(
             },
             dismissButton = {
                 Row {
+                    cluster.info.name?.let { name ->
+                        TextButton(onClick = {
+                            viewModel.denyCluster(name)
+                            editing = null
+                        }) { Text("Deny") }
+                    }
                     TextButton(onClick = { pickContact.launch(null) }) { Text("Link contact") }
                     TextButton(onClick = { editing = null }) { Text("Cancel") }
                 }

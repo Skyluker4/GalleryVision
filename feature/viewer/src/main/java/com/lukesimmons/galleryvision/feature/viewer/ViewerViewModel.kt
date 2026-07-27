@@ -66,6 +66,11 @@ class ViewerViewModel @Inject constructor(
             .map { list -> list.map { it.value.lowercase() }.toSet() }
             .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
 
+    private val deniedObjects: StateFlow<Set<String>> =
+        repository.denyList(DenyKind.OBJECT)
+            .map { list -> list.map { it.value.lowercase() }.toSet() }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
+
     private val dictionary: StateFlow<Set<String>> =
         settings.dictionaryWords.stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
 
@@ -78,8 +83,11 @@ class ViewerViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val regions: StateFlow<List<DetectionEntity>> =
-        combine(rawDetections, deniedWords, dictionary) { dets, denied, dict ->
+        combine(rawDetections, deniedWords, deniedObjects, dictionary) { dets, denied, deniedObj, dict ->
             dets.filter { det ->
+                if (det.kind == DetectionKind.OBJECT && det.label?.lowercase() in deniedObj) {
+                    return@filter false
+                }
                 val text = det.valueText?.lowercase() ?: return@filter true
                 denied.none { it.isNotEmpty() && text.contains(it) }
             }.map { det ->

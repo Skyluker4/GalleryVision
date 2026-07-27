@@ -129,9 +129,13 @@ class LibraryRepositoryImpl(
         val spec = QueryParser.parse(query)
         if (QueryCompiler.hasRegex(spec)) {
             val policies = db.folderPolicyDao().all().first().associate { it.folderId to it.mode }
+            val deniedObjects = db.denyDao().forKind(DenyKind.OBJECT).first()
+                .map { it.value.lowercase() }.toSet()
+            val deniedFaces = db.denyDao().forKind(DenyKind.FACE).first()
+                .map { it.value.lowercase() }.toSet()
             val matched = db.mediaDao().getAllList().mapNotNull { media ->
                 if (!policyVisible(media.folderId, policies, allowOnly)) return@mapNotNull null
-                val fv = buildFieldValues(media)
+                val fv = buildFieldValues(media, deniedObjects, deniedFaces)
                 if (SearchEvaluator.matches(spec, fv)) media to fv else null
             }
             val sorted = if (sort != null) {
@@ -166,7 +170,11 @@ class LibraryRepositoryImpl(
         return if (allowOnly) mode == FolderPolicyMode.ALLOW else mode != FolderPolicyMode.DENY
     }
 
-    private suspend fun buildFieldValues(media: MediaEntity): FieldValues {
+    private suspend fun buildFieldValues(
+        media: MediaEntity,
+        deniedObjects: Set<String>,
+        deniedFaces: Set<String>,
+    ): FieldValues {
         val dets = db.detectionDao().forMedia(media.id).first()
         return FieldValues(
             path = media.path,
@@ -176,8 +184,11 @@ class LibraryRepositoryImpl(
             taken = media.dateTaken,
             texts = dets.filter { it.kind == DetectionKind.TEXT }.mapNotNull { it.valueText },
             tags = db.tagDao().tagNamesFor(media.id),
-            objects = dets.filter { it.kind == DetectionKind.OBJECT }.mapNotNull { it.label },
-            faces = db.detectionDao().faceNamesFor(media.id),
+            objects = dets.filter { it.kind == DetectionKind.OBJECT }
+                .mapNotNull { it.label }
+                .filter { it.lowercase() !in deniedObjects },
+            faces = db.detectionDao().faceNamesFor(media.id)
+                .filter { it.lowercase() !in deniedFaces },
             notes = db.noteDao().forTarget(NoteTargetKind.MEDIA, media.id).first().map { it.body },
         )
     }

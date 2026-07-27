@@ -50,6 +50,7 @@ fun LibraryScreen(
     onMediaClick: (MediaEntity) -> Unit,
     onPeopleClick: () -> Unit,
     onFoldersClick: () -> Unit,
+    onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: LibraryViewModel = hiltViewModel(),
 ) {
@@ -72,6 +73,7 @@ fun LibraryScreen(
             onSort = viewModel::setSort,
             onPeopleClick = onPeopleClick,
             onFoldersClick = onFoldersClick,
+            onSettingsClick = onSettingsClick,
         )
 
         Box(modifier = Modifier.fillMaxSize()) {
@@ -140,6 +142,7 @@ private fun SearchBar(
     onSort: (SortSpec) -> Unit,
     onPeopleClick: () -> Unit,
     onFoldersClick: () -> Unit,
+    onSettingsClick: () -> Unit,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(8.dp),
@@ -163,6 +166,7 @@ private fun SearchBar(
         SortMenu(sort, onSort)
         TextButton(onClick = onFoldersClick) { Text("Folders") }
         TextButton(onClick = onPeopleClick) { Text("People") }
+        TextButton(onClick = onSettingsClick) { Text("Settings") }
     }
 }
 
