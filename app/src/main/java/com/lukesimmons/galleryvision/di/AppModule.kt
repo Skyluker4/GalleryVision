@@ -8,6 +8,7 @@ import com.lukesimmons.galleryvision.core.database.GalleryVisionDatabase
 import com.lukesimmons.galleryvision.data.index.LibraryRepositoryImpl
 import com.lukesimmons.galleryvision.data.mediastore.MediaStoreScanner
 import com.lukesimmons.galleryvision.domain.repository.LibraryRepository
+import com.lukesimmons.galleryvision.inference.OcrEngine
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -35,4 +36,8 @@ object AppModule {
         db: GalleryVisionDatabase,
         scanner: MediaStoreScanner,
     ): LibraryRepository = LibraryRepositoryImpl(db, scanner)
+
+    @Provides
+    @Singleton
+    fun provideOcrEngine(@ApplicationContext context: Context): OcrEngine = OcrEngine(context)
 }

@@ -28,7 +28,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.lukesimmons.galleryvision.feature.library.LibraryScreen
+import com.lukesimmons.galleryvision.feature.viewer.ViewerScreen
 import com.lukesimmons.galleryvision.ui.theme.GalleryVisionTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -57,6 +63,22 @@ private fun hasMediaAccess(context: Context): Boolean =
     }
 
 @Composable
+fun AppNavHost() {
+    val navController = rememberNavController()
+    NavHost(navController = navController, startDestination = "library") {
+        composable("library") {
+            LibraryScreen(onMediaClick = { id -> navController.navigate("viewer/$id") })
+        }
+        composable(
+            route = "viewer/{mediaId}",
+            arguments = listOf(navArgument("mediaId") { type = NavType.LongType }),
+        ) { backStackEntry ->
+            ViewerScreen(mediaId = backStackEntry.arguments?.getLong("mediaId") ?: 0L)
+        }
+    }
+}
+
+@Composable
 fun MediaPermissionGate() {
     val context = LocalContext.current
     val permissions = remember { mediaPermissions() }
@@ -66,7 +88,7 @@ fun MediaPermissionGate() {
     ) { result -> granted = result.values.all { it } }
 
     if (granted) {
-        LibraryScreen()
+        AppNavHost()
     } else {
         Column(
             modifier = Modifier.fillMaxSize(),

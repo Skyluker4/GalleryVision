@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Luke Simmons <luke5083@live.com>
 package com.lukesimmons.galleryvision.feature.library
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -32,6 +33,7 @@ import coil3.compose.AsyncImage
  */
 @Composable
 fun LibraryScreen(
+    onMediaClick: (Long) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: LibraryViewModel = hiltViewModel(),
 ) {
@@ -63,7 +65,12 @@ fun LibraryScreen(
                     items(items.itemCount) { index ->
                         val media = items[index]
                         if (media != null) {
-                            Card(modifier = Modifier.fillMaxWidth().aspectRatio(1f)) {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(1f)
+                                    .clickable { onMediaClick(media.id) },
+                            ) {
                                 AsyncImage(
                                     model = media.sourceUri,
                                     contentDescription = media.path,

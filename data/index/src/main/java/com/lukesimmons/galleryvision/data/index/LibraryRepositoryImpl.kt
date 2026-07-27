@@ -5,6 +5,7 @@ package com.lukesimmons.galleryvision.data.index
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import com.lukesimmons.galleryvision.core.database.GalleryVisionDatabase
+import com.lukesimmons.galleryvision.core.database.entity.DetectionEntity
 import com.lukesimmons.galleryvision.core.database.entity.MediaEntity
 import com.lukesimmons.galleryvision.data.mediastore.MediaStoreScanner
 import com.lukesimmons.galleryvision.domain.repository.LibraryRepository
@@ -35,4 +36,12 @@ class LibraryRepositoryImpl(
         db.mediaDao().deleteOlderThanGeneration(generation)
         result.media.size
     }
+
+    override suspend fun getMediaById(id: Long): MediaEntity? = db.mediaDao().getById(id)
+
+    override fun detectionsFor(mediaId: Long): Flow<List<DetectionEntity>> =
+        db.detectionDao().forMedia(mediaId)
+
+    override suspend fun saveDetections(detections: List<DetectionEntity>) =
+        db.detectionDao().insertAll(detections)
 }

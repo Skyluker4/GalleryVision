@@ -3,6 +3,7 @@
 package com.lukesimmons.galleryvision.domain.repository
 
 import androidx.paging.Pager
+import com.lukesimmons.galleryvision.core.database.entity.DetectionEntity
 import com.lukesimmons.galleryvision.core.database.entity.MediaEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -15,4 +16,10 @@ interface LibraryRepository {
 
     /** Run a scan now and persist results. Returns number of media indexed. */
     suspend fun rescanNow(): Int
+
+    suspend fun getMediaById(id: Long): MediaEntity?
+
+    fun detectionsFor(mediaId: Long): Flow<List<DetectionEntity>>
+
+    suspend fun saveDetections(detections: List<DetectionEntity>)
 }

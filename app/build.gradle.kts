@@ -86,6 +86,7 @@ kotlin {
 dependencies {
     // Feature + layers
     implementation(project(":feature:library"))
+    implementation(project(":feature:viewer"))
     implementation(project(":domain"))
     implementation(project(":data:index"))
     implementation(project(":data:mediastore"))
@@ -123,6 +124,7 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.navigation.compose)
 
     androidTestImplementation(libs.androidx.junit.ext)
     androidTestImplementation(libs.androidx.espresso.core)
