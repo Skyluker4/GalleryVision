@@ -33,7 +33,9 @@ Machine-learning models (bundled in app assets)
 -----------------------------------------------
 - PP-OCRv5 mobile detection + recognition (PaddleOCR)
   https://github.com/PaddlePaddle/PaddleOCR — Apache-2.0
-- YuNet face detection + SFace face recognition (OpenCV Zoo)
+- BlazeFace full-range face detection (MediaPipe, converted to ONNX via tf2onnx)
+  https://github.com/google/mediapipe — Apache-2.0
+- SFace face recognition (OpenCV Zoo)
   https://github.com/opencv/opencv_zoo — Apache-2.0 (see upstream per-model notes)
 - PP-PicoDet-S object detection (PaddleDetection, COCO-80)
   https://github.com/PaddlePaddle/PaddleDetection — Apache-2.0

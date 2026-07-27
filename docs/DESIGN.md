@@ -102,9 +102,15 @@ Dependency rule: `feature:* -> domain -> core:model/common`; `data:* -> domain` 
   **OCR fallback/edges:** Tesseract4Android (Apache-2.0) is an optional lightweight fallback for clean
   printed documents; an optional on-device VLM (Qwen2.5-VL-class GGUF via llama.cpp) may be added later
   as a "heavy" handwriting mode only if measured handwriting CER exceeds ~15-20% on the target mix.
-- **Faces (D3, F4):** OpenCV Zoo **YuNet** (detection, permissive, ~227 KB ONNX) + **SFace**
-  (recognition, permissive, 128-d embeddings) — the only fully-permissive shippable face pair (per a
-  2025-26 on-device CV licensing review). dlib ResNet (Boost) is the permissive C++ alternative.
+- **Faces (D3, F4):** MediaPipe **BlazeFace full-range** (detection, Apache-2.0, converted to ONNX
+  via tf2onnx) + OpenCV Zoo **SFace** (recognition, permissive, 128-d embeddings). **Amends the earlier
+  YuNet choice:** the official OpenCV Zoo YuNet export has a dead objectness head, and with cls-only
+  scoring it hallucinated faces on texture — on the probe corpus receipts scored *higher* than the one
+  real portrait (junk to 0.93 vs real 0.86) at every size (2-80% of frame), so no score/size/aspect/
+  landmark/embedding-norm filter could separate junk from real (all measured). BlazeFace full-range
+  separates them cleanly (real face 0.63-0.75, texture < 0.15). Detection runs through the verified
+  24x24/stride-8/4-anchor SSD decode; partial boxes are dropped by size-aware containment.
+  dlib ResNet (Boost) is the permissive C++ alternative.
   **InsightFace ArcFace "buffalo" packs excluded** (non-commercial research only). Embeddings computed
   and stored on-device only, clustered, user-named, optional `ContactsContract` link. Biometric-consent
   UX (see §10).
