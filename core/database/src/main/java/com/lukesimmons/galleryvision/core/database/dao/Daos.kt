@@ -82,6 +82,18 @@ interface DetectionDao {
 
     @Query("SELECT fc.name FROM detection d JOIN face_cluster fc ON fc.id = d.clusterId WHERE d.mediaId = :mediaId AND d.kind = 'FACE'")
     suspend fun faceNamesFor(mediaId: Long): List<String>
+
+    @Query("SELECT * FROM detection WHERE kind = 'FACE' AND embedding IS NOT NULL")
+    suspend fun facesWithEmbeddings(): List<DetectionEntity>
+
+    @Query("UPDATE detection SET clusterId = :clusterId WHERE id = :id")
+    suspend fun assignCluster(id: Long, clusterId: Long)
+
+    @Query("SELECT * FROM detection WHERE clusterId = :clusterId ORDER BY confidence DESC LIMIT 1")
+    suspend fun representativeForCluster(clusterId: Long): DetectionEntity?
+
+    @Query("SELECT * FROM detection WHERE clusterId = :clusterId")
+    fun forCluster(clusterId: Long): Flow<List<DetectionEntity>>
 }
 
 @Dao
@@ -130,6 +142,12 @@ interface FaceClusterDao {
 
     @Query("UPDATE face_cluster SET name = :name WHERE id = :id")
     suspend fun rename(id: Long, name: String)
+
+    @Query("UPDATE face_cluster SET contactLookupKey = :lookupKey WHERE id = :id")
+    suspend fun linkContact(id: Long, lookupKey: String?)
+
+    @Query("DELETE FROM face_cluster")
+    suspend fun clearAll()
 }
 
 @Dao

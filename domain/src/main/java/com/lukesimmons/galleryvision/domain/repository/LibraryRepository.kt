@@ -7,6 +7,7 @@ import com.lukesimmons.galleryvision.core.database.entity.DenyEntity
 import com.lukesimmons.galleryvision.core.database.entity.DetectionEntity
 import com.lukesimmons.galleryvision.core.database.entity.MediaEntity
 import com.lukesimmons.galleryvision.core.model.DenyKind
+import com.lukesimmons.galleryvision.core.model.FaceClusterInfo
 import com.lukesimmons.galleryvision.core.model.SortSpec
 import kotlinx.coroutines.flow.Flow
 
@@ -35,4 +36,12 @@ interface LibraryRepository {
     suspend fun removeDeny(kind: DenyKind, value: String)
 
     suspend fun updateDetection(detection: DetectionEntity)
+
+    fun clustersWithRepresentative(): Flow<List<FaceClusterInfo>>
+
+    suspend fun renameCluster(id: Long, name: String)
+
+    suspend fun linkClusterToContact(id: Long, lookupKey: String?)
+
+    suspend fun reclusterFaces(): Int
 }

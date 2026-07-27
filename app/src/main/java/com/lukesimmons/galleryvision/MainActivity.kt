@@ -33,6 +33,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.lukesimmons.galleryvision.feature.faces.PeopleScreen
 import com.lukesimmons.galleryvision.feature.library.LibraryScreen
 import com.lukesimmons.galleryvision.feature.viewer.ViewerScreen
 import com.lukesimmons.galleryvision.ui.theme.GalleryVisionTheme
@@ -67,7 +68,13 @@ fun AppNavHost() {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = "library") {
         composable("library") {
-            LibraryScreen(onMediaClick = { id -> navController.navigate("viewer/$id") })
+            LibraryScreen(
+                onMediaClick = { id -> navController.navigate("viewer/$id") },
+                onPeopleClick = { navController.navigate("people") },
+            )
+        }
+        composable("people") {
+            PeopleScreen()
         }
         composable(
             route = "viewer/{mediaId}",

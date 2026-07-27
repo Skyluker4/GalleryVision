@@ -48,6 +48,7 @@ import com.lukesimmons.galleryvision.core.model.SortSpec
 @Composable
 fun LibraryScreen(
     onMediaClick: (Long) -> Unit,
+    onPeopleClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: LibraryViewModel = hiltViewModel(),
 ) {
@@ -68,6 +69,7 @@ fun LibraryScreen(
             onClear = viewModel::clearSearch,
             sort = sort,
             onSort = viewModel::setSort,
+            onPeopleClick = onPeopleClick,
         )
 
         Box(modifier = Modifier.fillMaxSize()) {
@@ -134,6 +136,7 @@ private fun SearchBar(
     onClear: () -> Unit,
     sort: SortSpec?,
     onSort: (SortSpec) -> Unit,
+    onPeopleClick: () -> Unit,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(8.dp),
@@ -155,6 +158,7 @@ private fun SearchBar(
             },
         )
         SortMenu(sort, onSort)
+        TextButton(onClick = onPeopleClick) { Text("People") }
     }
 }
 

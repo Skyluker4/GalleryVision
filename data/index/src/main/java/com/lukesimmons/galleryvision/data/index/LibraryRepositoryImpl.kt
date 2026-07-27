@@ -11,9 +11,11 @@ import com.lukesimmons.galleryvision.core.database.entity.DetectionEntity
 import com.lukesimmons.galleryvision.core.database.entity.MediaEntity
 import com.lukesimmons.galleryvision.core.model.DenyKind
 import com.lukesimmons.galleryvision.core.model.DetectionKind
+import com.lukesimmons.galleryvision.core.model.FaceClusterInfo
 import com.lukesimmons.galleryvision.core.model.NoteTargetKind
 import com.lukesimmons.galleryvision.core.model.SortSpec
 import com.lukesimmons.galleryvision.data.mediastore.MediaStoreScanner
+import kotlinx.coroutines.flow.map
 import com.lukesimmons.galleryvision.domain.repository.LibraryRepository
 import com.lukesimmons.galleryvision.domain.search.FieldValues
 import com.lukesimmons.galleryvision.domain.search.QueryCompiler
@@ -66,6 +68,29 @@ class LibraryRepositoryImpl(
     override suspend fun removeDeny(kind: DenyKind, value: String) = db.denyDao().remove(kind, value)
 
     override suspend fun updateDetection(detection: DetectionEntity) = db.detectionDao().update(detection)
+
+    override fun clustersWithRepresentative(): Flow<List<FaceClusterInfo>> =
+        db.faceClusterDao().all().map { clusters ->
+            clusters.map { cluster ->
+                val rep = db.detectionDao().representativeForCluster(cluster.id)
+                val memberCount = db.detectionDao().forCluster(cluster.id).first().size
+                FaceClusterInfo(
+                    id = cluster.id,
+                    name = cluster.name,
+                    contactLookupKey = cluster.contactLookupKey,
+                    memberCount = memberCount,
+                    representativeMediaId = rep?.mediaId,
+                    faceBox = rep?.let { floatArrayOf(it.left, it.top, it.right, it.bottom) },
+                )
+            }
+        }
+
+    override suspend fun renameCluster(id: Long, name: String) = db.faceClusterDao().rename(id, name)
+
+    override suspend fun linkClusterToContact(id: Long, lookupKey: String?) =
+        db.faceClusterDao().linkContact(id, lookupKey)
+
+    override suspend fun reclusterFaces(): Int = FaceClusterer(db).recluster()
 
     override suspend fun search(query: String, sort: SortSpec?): List<MediaEntity> = withContext(Dispatchers.IO) {
         val spec = QueryParser.parse(query)

@@ -88,6 +88,16 @@ data class FaceCluster(
     val contactLookupKey: String?,
 )
 
+data class FaceClusterInfo(
+    val id: Long,
+    val name: String?,
+    val contactLookupKey: String?,
+    val memberCount: Int,
+    val representativeMediaId: Long?,
+    /** Normalized [left, top, right, bottom] of the representative face, or null. */
+    val faceBox: FloatArray?,
+)
+
 /** A nestable note attached to a media item or a folder. */
 data class Note(
     val id: Long,
