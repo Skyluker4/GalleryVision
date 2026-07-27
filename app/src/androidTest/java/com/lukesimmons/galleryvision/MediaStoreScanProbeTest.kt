@@ -15,16 +15,19 @@ class MediaStoreScanProbeTest {
     @Test
     fun probeScan() {
         val ctx = InstrumentationRegistry.getInstrumentation().targetContext
-        val raw = ctx.contentResolver.query(
-            MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL),
-            arrayOf(MediaStore.Files.FileColumns._ID, MediaStore.Files.FileColumns.MEDIA_TYPE),
-            "${MediaStore.Files.FileColumns.MEDIA_TYPE} IN (?, ?)",
-            arrayOf(
-                MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE.toString(),
-                MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO.toString(),
-            ),
-            null,
-        )
+        val raw =
+            ctx.contentResolver.query(
+                MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL),
+                arrayOf(MediaStore.Files.FileColumns._ID, MediaStore.Files.FileColumns.MEDIA_TYPE),
+                "${MediaStore.Files.FileColumns.MEDIA_TYPE} IN (?, ?)",
+                arrayOf(
+                    MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE
+                        .toString(),
+                    MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO
+                        .toString(),
+                ),
+                null,
+            )
         Log.i(TAG, "raw files query count=${raw?.count}, mediaType col idx=${raw?.getColumnIndex(MediaStore.Files.FileColumns.MEDIA_TYPE)}")
         raw?.use { c ->
             var n = 0

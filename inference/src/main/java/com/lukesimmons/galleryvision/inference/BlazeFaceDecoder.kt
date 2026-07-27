@@ -66,12 +66,13 @@ object BlazeFaceDecoder {
             val by = r[0] / INPUT_SIZE * ah + cy
             val bw = exp(r[2] / INPUT_SIZE) * aw
             val bh = exp(r[3] / INPUT_SIZE) * ah
-            val box = floatArrayOf(
-                (bx - bw / 2).coerceIn(0f, 1f),
-                (by - bh / 2).coerceIn(0f, 1f),
-                (bx + bw / 2).coerceIn(0f, 1f),
-                (by + bh / 2).coerceIn(0f, 1f),
-            )
+            val box =
+                floatArrayOf(
+                    (bx - bw / 2).coerceIn(0f, 1f),
+                    (by - bh / 2).coerceIn(0f, 1f),
+                    (bx + bw / 2).coerceIn(0f, 1f),
+                    (by + bh / 2).coerceIn(0f, 1f),
+                )
             val lm = FloatArray(12)
             for (k in 0 until 6) {
                 lm[k * 2] = (r[5 + k * 2] / INPUT_SIZE * aw + cx).coerceIn(0f, 1f)
@@ -97,13 +98,12 @@ object BlazeFaceDecoder {
     }
 
     /** Drops boxes mostly contained in a larger kept box (partial detections like temples). */
-    private fun suppressContained(kept: List<Detection>): List<Detection> {
-        return kept.filter { b ->
+    private fun suppressContained(kept: List<Detection>): List<Detection> =
+        kept.filter { b ->
             kept.none { other ->
                 other !== b && area(other.box) > area(b.box) && containment(other.box, b.box) >= CONTAINMENT
             }
         }
-    }
 
     private fun area(b: FloatArray): Float = (b[2] - b[0]) * (b[3] - b[1])
 

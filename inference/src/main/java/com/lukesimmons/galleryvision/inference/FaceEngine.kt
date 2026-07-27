@@ -98,6 +98,7 @@ class FaceEngine(
 
     private fun readClassifier(result: OrtSession.Result): FloatArray {
         val entry = result.first { it.key.contains("classifier", ignoreCase = true) }
+
         @Suppress("UNCHECKED_CAST")
         val raw = ((entry.value as OnnxTensor).value as Array<Array<FloatArray>>)[0]
         return FloatArray(raw.size) { raw[it][0] }
@@ -157,6 +158,7 @@ class FaceEngine(
         val px = IntArray(w * h)
         bitmap.getPixels(px, 0, w, 0, 0, w, h)
         val fb = FloatBuffer.allocate(3 * w * h)
+
         fun channel(
             p: Int,
             c: Int,

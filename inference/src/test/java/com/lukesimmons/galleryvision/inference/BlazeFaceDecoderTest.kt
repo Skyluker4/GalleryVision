@@ -7,7 +7,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class BlazeFaceDecoderTest {
-
     private fun blankOutputs(): Pair<Array<FloatArray>, FloatArray> {
         val reg = Array(2304) { FloatArray(16) }
         val cls = FloatArray(2304) { -10f }
