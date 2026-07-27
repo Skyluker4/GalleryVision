@@ -1,0 +1,36 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (C) 2026 Luke Simmons <luke5083@live.com>
+name: Super-Linter
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  lint:
+    name: Lint code base
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          submodules: false
+
+      - uses: super-linter/super-linter@9e863354e3ff62e0727d37183162c4a88873df41 # v8.6.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEFAULT_BRANCH: main
+          VALIDATE_ALL_CODEBASE: true
+          # Kotlin via ktlint; C/C++ via clang-format; plus YAML/Markdown/GHA/JSON.
+          # Disable linters that conflict or are irrelevant to this codebase.
+          VALIDATE_JAVA: false
+          VALIDATE_CHECKOV: false
+          VALIDATE_JSCPD: false
+          # Exclude vendored submodules, generated output, and tooling state.
+          FILTER_REGEX_EXCLUDE: '(app/jni/(Paddle-Lite|opencv)/|/build/|\.gradle/|\.omo/|app/src/main/cpp/ocr_clipper\.(cpp|hpp))'

@@ -15,3 +15,17 @@
 local.properties
 
 .idea/sonarlint.xml
+
+# OMO tooling / session state (not for publication)
+.omo/
+
+# Native build outputs and vendored intermediates
+app/jni/build_java_shared/
+app/jni/outputs/
+
+# Python venv used for model conversion tooling
+gv-ocr-venv/
+.venv/
+
+# Old native-demo scratch notes
+Notes.txt
