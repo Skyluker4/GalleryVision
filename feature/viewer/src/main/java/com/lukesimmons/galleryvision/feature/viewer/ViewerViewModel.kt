@@ -11,10 +11,12 @@ import androidx.lifecycle.viewModelScope
 import com.lukesimmons.galleryvision.core.database.entity.DenyEntity
 import com.lukesimmons.galleryvision.core.database.entity.DetectionEntity
 import com.lukesimmons.galleryvision.core.database.entity.MediaEntity
+import com.lukesimmons.galleryvision.core.database.entity.NoteEntity
 import com.lukesimmons.galleryvision.core.datastore.SettingsStore
 import com.lukesimmons.galleryvision.core.model.DenyKind
 import com.lukesimmons.galleryvision.core.model.DetectionKind
 import com.lukesimmons.galleryvision.core.model.DetectionSource
+import com.lukesimmons.galleryvision.core.model.NoteTargetKind
 import com.lukesimmons.galleryvision.domain.repository.LibraryRepository
 import com.lukesimmons.galleryvision.inference.FaceEngine
 import com.lukesimmons.galleryvision.inference.ObjectEngine
@@ -70,6 +72,10 @@ class ViewerViewModel @Inject constructor(
     private val rawDetections = mediaId.flatMapLatest { id ->
         if (id == 0L) flowOf(emptyList()) else repository.detectionsFor(id)
     }
+
+    val notes: StateFlow<List<NoteEntity>> = mediaId.flatMapLatest { id ->
+        if (id == 0L) flowOf(emptyList()) else repository.notesFor(NoteTargetKind.MEDIA, id)
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val regions: StateFlow<List<DetectionEntity>> =
         combine(rawDetections, deniedWords, dictionary) { dets, denied, dict ->
@@ -145,6 +151,26 @@ class ViewerViewModel @Inject constructor(
 
     fun addWordToDenyList(word: String) {
         viewModelScope.launch { repository.addDeny(DenyEntity(DenyKind.WORD, word)) }
+    }
+
+    fun addNote(body: String, parentNoteId: Long?) {
+        val id = mediaId.value
+        val text = body.trim()
+        if (id == 0L || text.isEmpty()) return
+        viewModelScope.launch {
+            repository.addNote(
+                NoteEntity(
+                    targetKind = NoteTargetKind.MEDIA,
+                    targetId = id,
+                    body = text,
+                    parentNoteId = parentNoteId,
+                ),
+            )
+        }
+    }
+
+    fun deleteNote(noteId: Long) {
+        viewModelScope.launch { repository.deleteNote(noteId) }
     }
 
     fun allText(): String = regions.value.joinToString("\n") { it.valueText ?: "" }

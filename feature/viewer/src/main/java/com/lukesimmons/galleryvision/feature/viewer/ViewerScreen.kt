@@ -57,9 +57,11 @@ fun ViewerScreen(
     val regions by viewModel.regions.collectAsStateWithLifecycle()
     val processing by viewModel.processing.collectAsStateWithLifecycle()
     val selected by viewModel.selected.collectAsStateWithLifecycle()
+    val notes by viewModel.notes.collectAsStateWithLifecycle()
     val clipboard = LocalClipboardManager.current
     var showEdit by remember { mutableStateOf(false) }
     var editText by remember { mutableStateOf("") }
+    var showNotes by remember { mutableStateOf(false) }
 
     Column(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth()) {
@@ -141,6 +143,9 @@ fun ViewerScreen(
                     modifier = Modifier.weight(1f),
                     style = MaterialTheme.typography.bodyMedium,
                 )
+                TextButton(onClick = { showNotes = true }) {
+                    Text(if (notes.isEmpty()) "Notes" else "Notes (${notes.size})")
+                }
                 if (regions.isNotEmpty()) {
                     Button(onClick = { clipboard.setText(AnnotatedString(viewModel.allText())) }) {
                         Text("Copy all")
@@ -148,6 +153,15 @@ fun ViewerScreen(
                 }
             }
         }
+    }
+
+    if (showNotes) {
+        NotesSheet(
+            notes = notes,
+            onAdd = viewModel::addNote,
+            onDelete = viewModel::deleteNote,
+            onDismiss = { showNotes = false },
+        )
     }
 
     if (showEdit) {

@@ -9,6 +9,7 @@ import com.lukesimmons.galleryvision.core.database.GalleryVisionDatabase
 import com.lukesimmons.galleryvision.core.database.entity.DenyEntity
 import com.lukesimmons.galleryvision.core.database.entity.DetectionEntity
 import com.lukesimmons.galleryvision.core.database.entity.MediaEntity
+import com.lukesimmons.galleryvision.core.database.entity.NoteEntity
 import com.lukesimmons.galleryvision.core.model.DenyKind
 import com.lukesimmons.galleryvision.core.model.DetectionKind
 import com.lukesimmons.galleryvision.core.model.FaceClusterInfo
@@ -91,6 +92,13 @@ class LibraryRepositoryImpl(
         db.faceClusterDao().linkContact(id, lookupKey)
 
     override suspend fun reclusterFaces(): Int = FaceClusterer(db).recluster()
+
+    override fun notesFor(kind: NoteTargetKind, targetId: Long): Flow<List<NoteEntity>> =
+        db.noteDao().forTarget(kind, targetId)
+
+    override suspend fun addNote(note: NoteEntity): Long = db.noteDao().upsert(note)
+
+    override suspend fun deleteNote(id: Long) = db.noteDao().delete(id)
 
     override suspend fun search(query: String, sort: SortSpec?): List<MediaEntity> = withContext(Dispatchers.IO) {
         val spec = QueryParser.parse(query)

@@ -6,8 +6,10 @@ import androidx.paging.Pager
 import com.lukesimmons.galleryvision.core.database.entity.DenyEntity
 import com.lukesimmons.galleryvision.core.database.entity.DetectionEntity
 import com.lukesimmons.galleryvision.core.database.entity.MediaEntity
+import com.lukesimmons.galleryvision.core.database.entity.NoteEntity
 import com.lukesimmons.galleryvision.core.model.DenyKind
 import com.lukesimmons.galleryvision.core.model.FaceClusterInfo
+import com.lukesimmons.galleryvision.core.model.NoteTargetKind
 import com.lukesimmons.galleryvision.core.model.SortSpec
 import kotlinx.coroutines.flow.Flow
 
@@ -44,4 +46,10 @@ interface LibraryRepository {
     suspend fun linkClusterToContact(id: Long, lookupKey: String?)
 
     suspend fun reclusterFaces(): Int
+
+    fun notesFor(kind: NoteTargetKind, targetId: Long): Flow<List<NoteEntity>>
+
+    suspend fun addNote(note: NoteEntity): Long
+
+    suspend fun deleteNote(id: Long)
 }
