@@ -29,3 +29,6 @@ gv-ocr-venv/
 
 # Old native-demo scratch notes
 Notes.txt
+
+# Ignore all Gradle module build output dirs
+**/build/
