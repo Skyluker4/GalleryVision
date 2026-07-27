@@ -4,8 +4,10 @@ package com.lukesimmons.galleryvision.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.work.WorkManager
 import com.lukesimmons.galleryvision.core.database.GalleryVisionDatabase
 import com.lukesimmons.galleryvision.core.datastore.SettingsStore
+import com.lukesimmons.galleryvision.data.index.DetectionIndexer
 import com.lukesimmons.galleryvision.data.index.LibraryRepositoryImpl
 import com.lukesimmons.galleryvision.data.mediastore.MediaStoreScanner
 import com.lukesimmons.galleryvision.domain.repository.LibraryRepository
@@ -26,7 +28,9 @@ object AppModule {
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): GalleryVisionDatabase =
-        Room.databaseBuilder(context, GalleryVisionDatabase::class.java, "galleryvision.db").build()
+        Room.databaseBuilder(context, GalleryVisionDatabase::class.java, "galleryvision.db")
+            .fallbackToDestructiveMigration()
+            .build()
 
     @Provides
     @Singleton
@@ -51,6 +55,19 @@ object AppModule {
     @Provides
     @Singleton
     fun provideObjectEngine(@ApplicationContext context: Context): ObjectEngine = ObjectEngine(context)
+
+    @Provides
+    @Singleton
+    fun provideDetectionIndexer(
+        db: GalleryVisionDatabase,
+        ocrEngine: OcrEngine,
+        faceEngine: FaceEngine,
+        objectEngine: ObjectEngine,
+    ): DetectionIndexer = DetectionIndexer(db, ocrEngine, faceEngine, objectEngine)
+
+    @Provides
+    @Singleton
+    fun provideWorkManager(@ApplicationContext context: Context): WorkManager = WorkManager.getInstance(context)
 
     @Provides
     @Singleton

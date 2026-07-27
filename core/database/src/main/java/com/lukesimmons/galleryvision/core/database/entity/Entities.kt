@@ -61,6 +61,8 @@ data class DetectionEntity(
     val confidence: Float,
     val clusterId: Long?,
     val edited: Boolean,
+    /** Comma-joined embedding vector (e.g. 128-d SFace) for FACE detections; null otherwise. */
+    val embedding: String? = null,
 )
 
 @Entity(

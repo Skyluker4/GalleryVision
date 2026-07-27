@@ -3,26 +3,22 @@
 package com.lukesimmons.galleryvision.workers
 
 import android.content.Context
-import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.lukesimmons.galleryvision.domain.repository.LibraryRepository
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedInject
+import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /** Background MediaStore -> Room sync (incremental, generation-guarded). */
-@HiltWorker
-class ScanWorker @AssistedInject constructor(
-    @Assisted context: Context,
-    @Assisted params: WorkerParameters,
-    private val repository: LibraryRepository,
+class ScanWorker(
+    context: Context,
+    params: WorkerParameters,
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         try {
-            repository.rescanNow()
+            val entryPoint = EntryPointAccessors.fromApplication(applicationContext, WorkerEntryPoint::class.java)
+            entryPoint.libraryRepository().rescanNow()
             Result.success()
         } catch (e: Exception) {
             if (runAttemptCount < 3) Result.retry() else Result.failure()

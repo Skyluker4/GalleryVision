@@ -75,7 +75,9 @@ class OcrEngine(context: Context) {
     private fun detect(src: Bitmap): List<FloatArray> {
         val (resized, ratioW, ratioH) = resizeForDet(src)
         val input = toDetTensor(resized)
-        resized.recycle()
+        // createScaledBitmap returns the source object itself when no scaling is needed, so only
+        // recycle when it is actually a distinct bitmap, or we would free the caller's source.
+        if (resized != src) resized.recycle()
         input.use { tensor ->
             det!!.run(mapOf(det!!.inputNames.first() to tensor)).use { result ->
                 @Suppress("UNCHECKED_CAST")
@@ -198,16 +200,28 @@ class OcrEngine(context: Context) {
         for (v in quad) {
             if (v.isNaN() || v.isInfinite()) return null
         }
+        // Reject degenerate/collinear quads (near-zero area); native drawBitmap aborts on them.
+        var twice = 0f
+        for (k in 0 until 4) {
+            val j = (k + 1) % 4
+            twice += quad[k * 2] * quad[j * 2 + 1] - quad[j * 2] * quad[k * 2 + 1]
+        }
+        if (kotlin.math.abs(twice) < 1e-4f) return null
         val x0 = quad[0] * src.width; val y0 = quad[1] * src.height
         val x1 = quad[2] * src.width; val y1 = quad[3] * src.height
         val x2 = quad[4] * src.width; val y2 = quad[5] * src.height
         val x3 = quad[6] * src.width; val y3 = quad[7] * src.height
         val w = max(1, max(dist(x0, y0, x1, y1), dist(x3, y3, x2, y2)).toInt())
         val h = max(1, max(dist(x0, y0, x3, y3), dist(x1, y1, x2, y2)).toInt())
-        val srcPts = floatArrayOf(x0, y0, x1, y1, x2, y2, x3, y3)
-        val dstPts = floatArrayOf(0f, 0f, w.toFloat(), 0f, w.toFloat(), h.toFloat(), 0f, h.toFloat())
+        if (w > src.width * 2 || h > src.height * 2) return null
+        // Affine rotate+translate (never a projective/singular matrix, so native drawBitmap
+        // cannot abort the way it could with a poly-to-poly warp on thin/skewed quads).
+        val cx = (x0 + x1 + x2 + x3) / 4f
+        val cy = (y0 + y1 + y2 + y3) / 4f
+        val angleDeg = Math.toDegrees(kotlin.math.atan2(y1 - y0, x1 - x0).toDouble()).toFloat()
         val m = Matrix()
-        if (!m.setPolyToPoly(srcPts, 0, dstPts, 0, 4)) return null
+        m.setTranslate(w / 2f - cx, h / 2f - cy)
+        m.preRotate(-angleDeg, cx, cy)
         val out = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         return runCatching {
             Canvas(out).drawBitmap(src, m, null)

@@ -47,6 +47,9 @@ interface MediaDao {
     @Query("SELECT * FROM media")
     suspend fun getAllList(): List<MediaEntity>
 
+    @Query("SELECT * FROM media WHERE id NOT IN (SELECT DISTINCT mediaId FROM detection) ORDER BY COALESCE(dateTaken, dateAdded, dateModified, 0) DESC LIMIT :limit")
+    suspend fun mediaWithoutDetections(limit: Int): List<MediaEntity>
+
     @RawQuery(observedEntities = [MediaEntity::class])
     fun searchRaw(query: SupportSQLiteQuery): List<MediaEntity>
 }

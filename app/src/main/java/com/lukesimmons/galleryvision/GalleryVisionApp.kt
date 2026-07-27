@@ -12,6 +12,7 @@ import androidx.work.Configuration
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import com.lukesimmons.galleryvision.workers.DetectionWorker
 import com.lukesimmons.galleryvision.workers.ScanWorker
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
@@ -28,20 +29,30 @@ class GalleryVisionApp : Application(), Configuration.Provider {
     override fun onCreate() {
         super.onCreate()
         registerMediaObserver()
+        enqueueScanThenDetect(WorkManager.getInstance(this))
     }
 
     private fun registerMediaObserver() {
         val workManager = WorkManager.getInstance(this)
         val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
             override fun onChange(selfChange: Boolean) {
-                workManager.enqueueUniqueWork(
-                    ScanWorker.WORK_NAME,
-                    ExistingWorkPolicy.REPLACE,
-                    OneTimeWorkRequestBuilder<ScanWorker>().build(),
-                )
+                enqueueScanThenDetect(workManager)
             }
         }
         contentResolver.registerContentObserver(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, true, observer)
         contentResolver.registerContentObserver(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, true, observer)
+    }
+
+    private fun enqueueScanThenDetect(workManager: WorkManager) {
+        val scan = OneTimeWorkRequestBuilder<ScanWorker>().build()
+        val detect = OneTimeWorkRequestBuilder<DetectionWorker>().build()
+        workManager
+            .beginUniqueWork(CHAIN_WORK_NAME, ExistingWorkPolicy.REPLACE, scan)
+            .then(detect)
+            .enqueue()
+    }
+
+    private companion object {
+        const val CHAIN_WORK_NAME = "galleryvision.scanThenDetect"
     }
 }

@@ -35,7 +35,7 @@ import com.lukesimmons.galleryvision.core.database.entity.TagEntity
         DenyEntity::class,
         FolderPolicyEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)

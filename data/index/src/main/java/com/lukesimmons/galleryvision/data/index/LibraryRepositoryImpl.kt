@@ -43,8 +43,11 @@ class LibraryRepositoryImpl(
         val result = scanner.scan(generation)
         db.folderDao().upsertAll(result.folders)
         db.mediaDao().upsertAll(result.media)
-        // Incremental: drop rows not seen in this generation (deleted/moved media).
-        db.mediaDao().deleteOlderThanGeneration(generation)
+        // Incremental: drop rows not seen in this generation (deleted/moved media) — but only
+        // when the scan returned items, so a transient empty/failed scan cannot wipe the library.
+        if (result.media.isNotEmpty()) {
+            db.mediaDao().deleteOlderThanGeneration(generation)
+        }
         result.media.size
     }
 
