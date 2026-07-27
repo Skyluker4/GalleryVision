@@ -107,8 +107,8 @@ dependencies {
     ksp(libs.hilt.compiler)
     // Force a Kotlin-2.4-capable metadata reader for Hilt's processor (its bundled
     // kotlin-metadata-jvm tops out at 2.3.0 and chokes on Kotlin-2.4 libraries).
-    ksp("org.jetbrains.kotlin:kotlin-metadata-jvm:2.4.0")
-    annotationProcessor("org.jetbrains.kotlin:kotlin-metadata-jvm:2.4.0")
+    ksp("org.jetbrains.kotlin:kotlin-metadata-jvm:2.4.10")
+    annotationProcessor("org.jetbrains.kotlin:kotlin-metadata-jvm:2.4.10")
 
     // Database (Room builder used by DI)
     implementation(libs.androidx.room.runtime)
