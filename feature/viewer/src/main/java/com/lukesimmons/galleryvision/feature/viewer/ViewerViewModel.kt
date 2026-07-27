@@ -17,6 +17,7 @@ import com.lukesimmons.galleryvision.core.model.DetectionKind
 import com.lukesimmons.galleryvision.core.model.DetectionSource
 import com.lukesimmons.galleryvision.domain.repository.LibraryRepository
 import com.lukesimmons.galleryvision.inference.FaceEngine
+import com.lukesimmons.galleryvision.inference.ObjectEngine
 import com.lukesimmons.galleryvision.inference.OcrEngine
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -42,6 +43,7 @@ class ViewerViewModel @Inject constructor(
     private val repository: LibraryRepository,
     private val ocrEngine: OcrEngine,
     private val faceEngine: FaceEngine,
+    private val objectEngine: ObjectEngine,
     private val settings: SettingsStore,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
@@ -97,9 +99,11 @@ class ViewerViewModel @Inject constructor(
             val bitmap = loadBitmap(m.sourceUri) ?: return@withContext
             val ocrResults = ocrEngine.ocr(bitmap)
             val faceResults = runCatching { faceEngine.detect(bitmap) }.getOrDefault(emptyList())
+            val objectResults = runCatching { objectEngine.detect(bitmap) }.getOrDefault(emptyList())
             repository.saveDetections(
                 ocrResults.map { it.toDetectionEntity(m.id) } +
-                    faceResults.map { it.toDetectionEntity(m.id) },
+                    faceResults.map { it.toDetectionEntity(m.id) } +
+                    objectResults.map { it.toDetectionEntity(m.id) },
             )
         } finally {
             _processing.value = false
@@ -215,6 +219,22 @@ class ViewerViewModel @Inject constructor(
             left = left, top = top, right = right, bottom = bottom,
             poly = box.joinToString(",") { it.toString() },
             label = null,
+            valueText = null,
+            confidence = score,
+            clusterId = null,
+            edited = false,
+        )
+    }
+
+    private fun ObjectEngine.Detected.toDetectionEntity(mediaId: Long): DetectionEntity {
+        val box = floatArrayOf(left, top, right, top, right, bottom, left, bottom)
+        return DetectionEntity(
+            mediaId = mediaId,
+            kind = DetectionKind.OBJECT,
+            source = DetectionSource.AUTO,
+            left = left, top = top, right = right, bottom = bottom,
+            poly = box.joinToString(",") { it.toString() },
+            label = label,
             valueText = null,
             confidence = score,
             clusterId = null,

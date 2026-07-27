@@ -10,6 +10,7 @@ import com.lukesimmons.galleryvision.data.index.LibraryRepositoryImpl
 import com.lukesimmons.galleryvision.data.mediastore.MediaStoreScanner
 import com.lukesimmons.galleryvision.domain.repository.LibraryRepository
 import com.lukesimmons.galleryvision.inference.FaceEngine
+import com.lukesimmons.galleryvision.inference.ObjectEngine
 import com.lukesimmons.galleryvision.inference.OcrEngine
 import dagger.Module
 import dagger.Provides
@@ -46,6 +47,10 @@ object AppModule {
     @Provides
     @Singleton
     fun provideFaceEngine(@ApplicationContext context: Context): FaceEngine = FaceEngine(context)
+
+    @Provides
+    @Singleton
+    fun provideObjectEngine(@ApplicationContext context: Context): ObjectEngine = ObjectEngine(context)
 
     @Provides
     @Singleton
