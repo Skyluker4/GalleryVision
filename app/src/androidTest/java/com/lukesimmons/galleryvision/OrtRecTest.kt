@@ -47,7 +47,9 @@ class OrtRecTest {
                     val v =
                         when (c) {
                             0 -> p and 0xff // B
+
                             1 -> (p shr 8) and 0xff // G
+
                             else -> (p shr 16) and 0xff // R
                         }
                     fb.put((v / 255f - 0.5f) / 0.5f)
