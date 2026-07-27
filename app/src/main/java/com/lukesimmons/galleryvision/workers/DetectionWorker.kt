@@ -17,22 +17,22 @@ class DetectionWorker(
     context: Context,
     params: WorkerParameters,
 ) : CoroutineWorker(context, params) {
-
-    override suspend fun doWork(): Result = withContext(Dispatchers.Default) {
-        try {
-            val entryPoint = EntryPointAccessors.fromApplication(applicationContext, WorkerEntryPoint::class.java)
-            val db = entryPoint.database()
-            val indexer = entryPoint.detectionIndexer()
-            val unprocessed = db.mediaDao().mediaWithoutDetections(BATCH_SIZE)
-            for (media in unprocessed) {
-                val bitmap = loadBitmap(media.sourceUri) ?: continue
-                indexer.indexBitmap(media.id, bitmap)
+    override suspend fun doWork(): Result =
+        withContext(Dispatchers.Default) {
+            try {
+                val entryPoint = EntryPointAccessors.fromApplication(applicationContext, WorkerEntryPoint::class.java)
+                val db = entryPoint.database()
+                val indexer = entryPoint.detectionIndexer()
+                val unprocessed = db.mediaDao().mediaWithoutDetections(BATCH_SIZE)
+                for (media in unprocessed) {
+                    val bitmap = loadBitmap(media.sourceUri) ?: continue
+                    indexer.indexBitmap(media.id, bitmap)
+                }
+                Result.success()
+            } catch (e: Exception) {
+                if (runAttemptCount < 3) Result.retry() else Result.failure()
             }
-            Result.success()
-        } catch (e: Exception) {
-            if (runAttemptCount < 3) Result.retry() else Result.failure()
         }
-    }
 
     private fun loadBitmap(sourceUri: String): Bitmap? =
         runCatching {

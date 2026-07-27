@@ -21,8 +21,10 @@ class DetectionIndexer(
     private val faceEngine: FaceEngine,
     private val objectEngine: ObjectEngine,
 ) {
-
-    suspend fun indexBitmap(mediaId: Long, bitmap: Bitmap): Int {
+    suspend fun indexBitmap(
+        mediaId: Long,
+        bitmap: Bitmap,
+    ): Int {
         val ocrResults = ocrEngine.ocr(bitmap)
         val faces = runCatching { faceEngine.detect(bitmap) }.getOrDefault(emptyList())
         val objects = runCatching { objectEngine.detect(bitmap) }.getOrDefault(emptyList())
@@ -43,16 +45,24 @@ class DetectionIndexer(
     }
 
     private fun OcrEngine.TextRegion.toTextEntity(mediaId: Long): DetectionEntity {
-        var minX = 1f; var minY = 1f; var maxX = 0f; var maxY = 0f
+        var minX = 1f
+        var minY = 1f
+        var maxX = 0f
+        var maxY = 0f
         for (k in 0 until 4) {
-            minX = minOf(minX, quad[k * 2]); maxX = maxOf(maxX, quad[k * 2])
-            minY = minOf(minY, quad[k * 2 + 1]); maxY = maxOf(maxY, quad[k * 2 + 1])
+            minX = minOf(minX, quad[k * 2])
+            maxX = maxOf(maxX, quad[k * 2])
+            minY = minOf(minY, quad[k * 2 + 1])
+            maxY = maxOf(maxY, quad[k * 2 + 1])
         }
         return DetectionEntity(
             mediaId = mediaId,
             kind = DetectionKind.TEXT,
             source = DetectionSource.AUTO,
-            left = minX, top = minY, right = maxX, bottom = maxY,
+            left = minX,
+            top = minY,
+            right = maxX,
+            bottom = maxY,
             poly = quad.joinToString(",") { it.toString() },
             label = null,
             valueText = text,
@@ -63,13 +73,19 @@ class DetectionIndexer(
         )
     }
 
-    private fun FaceEngine.Face.toFaceEntity(mediaId: Long, embedding: FloatArray?): DetectionEntity {
+    private fun FaceEngine.Face.toFaceEntity(
+        mediaId: Long,
+        embedding: FloatArray?,
+    ): DetectionEntity {
         val box = floatArrayOf(left, top, right, top, right, bottom, left, bottom)
         return DetectionEntity(
             mediaId = mediaId,
             kind = DetectionKind.FACE,
             source = DetectionSource.AUTO,
-            left = left, top = top, right = right, bottom = bottom,
+            left = left,
+            top = top,
+            right = right,
+            bottom = bottom,
             poly = box.joinToString(",") { it.toString() },
             label = null,
             valueText = null,
@@ -86,7 +102,10 @@ class DetectionIndexer(
             mediaId = mediaId,
             kind = DetectionKind.OBJECT,
             source = DetectionSource.AUTO,
-            left = left, top = top, right = right, bottom = bottom,
+            left = left,
+            top = top,
+            right = right,
+            bottom = bottom,
             poly = box.joinToString(",") { it.toString() },
             label = label,
             valueText = null,

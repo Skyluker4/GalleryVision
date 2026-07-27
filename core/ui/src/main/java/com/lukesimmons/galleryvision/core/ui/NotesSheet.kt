@@ -30,7 +30,10 @@ fun threadNotes(notes: List<NoteEntity>): List<Pair<NoteEntity, Int>> {
     val byParent = notes.groupBy { it.parentNoteId }
     val out = mutableListOf<Pair<NoteEntity, Int>>()
 
-    fun walk(parentId: Long?, depth: Int) {
+    fun walk(
+        parentId: Long?,
+        depth: Int,
+    ) {
         byParent[parentId].orEmpty().sortedBy { it.id }.forEach { note ->
             out += note to depth
             walk(note.id, depth + 1)
@@ -69,9 +72,10 @@ fun NotesSheet(
                 LazyColumn(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
                     items(threaded, key = { it.first.id }) { (note, depth) ->
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(start = (depth * 16).dp, top = 4.dp),
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = (depth * 16).dp, top = 4.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(

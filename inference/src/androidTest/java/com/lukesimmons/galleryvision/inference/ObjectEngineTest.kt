@@ -12,7 +12,6 @@ import org.junit.runner.RunWith
 /** Verifies PP-PicoDet object detection on-device: the Einstein portrait must read as "person". */
 @RunWith(AndroidJUnit4::class)
 class ObjectEngineTest {
-
     @Test
     fun detectsPerson() {
         val ctx = InstrumentationRegistry.getInstrumentation().context
@@ -28,8 +27,11 @@ class ObjectEngineTest {
             val person = objects.filter { it.label == "person" }
             assertTrue("expected a 'person' detection, got: ${objects.map { it.label }}", person.isNotEmpty())
             val top = person.maxBy { it.score }
-            assertTrue("person box invalid", top.right > top.left && top.bottom > top.top &&
-                top.left in 0f..1f && top.right in 0f..1f && top.top in 0f..1f && top.bottom in 0f..1f)
+            assertTrue(
+                "person box invalid",
+                top.right > top.left && top.bottom > top.top &&
+                    top.left in 0f..1f && top.right in 0f..1f && top.top in 0f..1f && top.bottom in 0f..1f,
+            )
         } finally {
             engine.close()
         }

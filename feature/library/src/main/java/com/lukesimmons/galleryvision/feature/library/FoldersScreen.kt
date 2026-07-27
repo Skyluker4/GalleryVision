@@ -59,10 +59,11 @@ fun FoldersScreen(
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             items(folders, key = { it.id }) { folder ->
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onFolderClick(folder.id) }
-                        .padding(vertical = 8.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable { onFolderClick(folder.id) }
+                            .padding(vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
@@ -86,7 +87,10 @@ fun FoldersScreen(
 }
 
 @Composable
-private fun PolicyMenu(mode: FolderPolicyMode?, onSelect: (FolderPolicyMode?) -> Unit) {
+private fun PolicyMenu(
+    mode: FolderPolicyMode?,
+    onSelect: (FolderPolicyMode?) -> Unit,
+) {
     var open by remember { mutableStateOf(false) }
     Box {
         TextButton(onClick = { open = true }) {
@@ -99,14 +103,23 @@ private fun PolicyMenu(mode: FolderPolicyMode?, onSelect: (FolderPolicyMode?) ->
             )
         }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-            DropdownMenuItem(text = { Text("Default") }, onClick = { onSelect(null); open = false })
+            DropdownMenuItem(text = { Text("Default") }, onClick = {
+                onSelect(null)
+                open = false
+            })
             DropdownMenuItem(
                 text = { Text("Deny (hide)") },
-                onClick = { onSelect(FolderPolicyMode.DENY); open = false },
+                onClick = {
+                    onSelect(FolderPolicyMode.DENY)
+                    open = false
+                },
             )
             DropdownMenuItem(
                 text = { Text("Allow (keep in allow-list)") },
-                onClick = { onSelect(FolderPolicyMode.ALLOW); open = false },
+                onClick = {
+                    onSelect(FolderPolicyMode.ALLOW)
+                    open = false
+                },
             )
         }
     }

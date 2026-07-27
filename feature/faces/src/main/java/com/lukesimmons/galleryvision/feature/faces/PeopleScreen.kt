@@ -55,15 +55,16 @@ fun PeopleScreen(
     var editing by remember { mutableStateOf<PeopleViewModel.ClusterUi?>(null) }
     var editText by remember { mutableStateOf("") }
 
-    val pickContact = rememberLauncherForActivityResult(ActivityResultContracts.PickContact()) { uri: Uri? ->
-        val cluster = editing ?: return@rememberLauncherForActivityResult
-        if (uri != null) {
-            val (lookupKey, displayName) = queryContact(context, uri)
-            viewModel.linkContact(cluster.info.id, lookupKey)
-            if (displayName != null) viewModel.rename(cluster.info.id, displayName)
+    val pickContact =
+        rememberLauncherForActivityResult(ActivityResultContracts.PickContact()) { uri: Uri? ->
+            val cluster = editing ?: return@rememberLauncherForActivityResult
+            if (uri != null) {
+                val (lookupKey, displayName) = queryContact(context, uri)
+                viewModel.linkContact(cluster.info.id, lookupKey)
+                if (displayName != null) viewModel.rename(cluster.info.id, displayName)
+            }
+            editing = null
         }
-        editing = null
-    }
 
     Column(modifier = modifier.fillMaxSize().padding(8.dp)) {
         Row(
@@ -94,12 +95,13 @@ fun PeopleScreen(
             ) {
                 items(clusters, key = { it.info.id }) { cluster ->
                     Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                editText = cluster.info.name ?: ""
-                                editing = cluster
-                            },
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    editText = cluster.info.name ?: ""
+                                    editing = cluster
+                                },
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             if (cluster.face != null) {
@@ -161,22 +163,26 @@ fun PeopleScreen(
     }
 }
 
-private fun queryContact(context: android.content.Context, uri: Uri): Pair<String?, String?> {
+private fun queryContact(
+    context: android.content.Context,
+    uri: Uri,
+): Pair<String?, String?> {
     var lookupKey: String? = null
     var displayName: String? = null
     runCatching {
-        context.contentResolver.query(
-            uri,
-            arrayOf(ContactsContract.Contacts.LOOKUP_KEY, ContactsContract.Contacts.DISPLAY_NAME),
-            null,
-            null,
-            null,
-        )?.use { cursor ->
-            if (cursor.moveToFirst()) {
-                lookupKey = cursor.getString(0)
-                displayName = cursor.getString(1)
+        context.contentResolver
+            .query(
+                uri,
+                arrayOf(ContactsContract.Contacts.LOOKUP_KEY, ContactsContract.Contacts.DISPLAY_NAME),
+                null,
+                null,
+                null,
+            )?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    lookupKey = cursor.getString(0)
+                    displayName = cursor.getString(1)
+                }
             }
-        }
     }
     return lookupKey to displayName
 }

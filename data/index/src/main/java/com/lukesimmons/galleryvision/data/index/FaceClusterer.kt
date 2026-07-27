@@ -7,13 +7,15 @@ import com.lukesimmons.galleryvision.core.database.entity.FaceClusterEntity
 import kotlin.math.sqrt
 
 /** Groups FACE detections into person clusters by SFace embedding cosine similarity. */
-class FaceClusterer(private val db: GalleryVisionDatabase) {
-
+class FaceClusterer(
+    private val db: GalleryVisionDatabase,
+) {
     suspend fun recluster(similarityThreshold: Float = DEFAULT_THRESHOLD): Int {
         val detections = db.detectionDao().facesWithEmbeddings()
-        val items = detections.mapNotNull { det ->
-            parseEmbedding(det.embedding)?.let { det.id to it }
-        }
+        val items =
+            detections.mapNotNull { det ->
+                parseEmbedding(det.embedding)?.let { det.id to it }
+            }
         if (items.isEmpty()) return 0
 
         val assignments = cluster(items.map { it.second }, similarityThreshold)
@@ -22,9 +24,10 @@ class FaceClusterer(private val db: GalleryVisionDatabase) {
         val indexToClusterId = mutableMapOf<Int, Long>()
         for ((i, det) in items.withIndex()) {
             val clusterIndex = assignments[i]
-            val clusterId = indexToClusterId.getOrPut(clusterIndex) {
-                db.faceClusterDao().upsert(FaceClusterEntity(name = null, contactLookupKey = null))
-            }
+            val clusterId =
+                indexToClusterId.getOrPut(clusterIndex) {
+                    db.faceClusterDao().upsert(FaceClusterEntity(name = null, contactLookupKey = null))
+                }
             db.detectionDao().assignCluster(det.first, clusterId)
         }
         return indexToClusterId.size
@@ -38,7 +41,10 @@ class FaceClusterer(private val db: GalleryVisionDatabase) {
          * most similar if that similarity meets [threshold], else it starts a new cluster. Returns a
          * cluster index per embedding (same order as the input).
          */
-        fun cluster(embeddings: List<FloatArray>, threshold: Float): List<Int> {
+        fun cluster(
+            embeddings: List<FloatArray>,
+            threshold: Float,
+        ): List<Int> {
             val centroids = mutableListOf<FloatArray>()
             val assignments = IntArray(embeddings.size)
             for ((i, emb) in embeddings.withIndex()) {
@@ -63,7 +69,10 @@ class FaceClusterer(private val db: GalleryVisionDatabase) {
             return assignments.toList()
         }
 
-        fun cosine(a: FloatArray, b: FloatArray): Float {
+        fun cosine(
+            a: FloatArray,
+            b: FloatArray,
+        ): Float {
             var dot = 0f
             var na = 0f
             var nb = 0f
@@ -76,6 +85,10 @@ class FaceClusterer(private val db: GalleryVisionDatabase) {
         }
 
         fun parseEmbedding(csv: String?): FloatArray? =
-            csv?.split(',')?.mapNotNull { it.toFloatOrNull() }?.takeIf { it.isNotEmpty() }?.toFloatArray()
+            csv
+                ?.split(',')
+                ?.mapNotNull { it.toFloatOrNull() }
+                ?.takeIf { it.isNotEmpty() }
+                ?.toFloatArray()
     }
 }

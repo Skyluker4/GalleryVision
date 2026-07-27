@@ -22,9 +22,14 @@ import kotlin.math.sqrt
  * fits a minimum-area rotated rect to each component's convex hull (in place of OpenCV
  * findContours/minAreaRect + Vatti unclip), keeping the engine dependency-free.
  */
-class OcrEngine(context: Context) {
-
-    data class TextRegion(val text: String, val quad: FloatArray, val confidence: Float)
+class OcrEngine(
+    context: Context,
+) {
+    data class TextRegion(
+        val text: String,
+        val quad: FloatArray,
+        val confidence: Float,
+    )
 
     private val appContext = context.applicationContext
     private val env = OrtEnvironment.getEnvironment()
@@ -38,7 +43,11 @@ class OcrEngine(context: Context) {
     @Synchronized
     private fun ensureLoaded() {
         if (dict == null) {
-            dict = appContext.assets.open("$MODEL_DIR/ppocrv5_dict.txt").bufferedReader().useLines { it.toList() }
+            dict =
+                appContext.assets
+                    .open("$MODEL_DIR/ppocrv5_dict.txt")
+                    .bufferedReader()
+                    .useLines { it.toList() }
         }
         if (det == null) {
             det = newSession("$MODEL_DIR/det.onnx")
@@ -56,8 +65,10 @@ class OcrEngine(context: Context) {
     fun close() {
         if (closed) return
         closed = true
-        det?.close(); rec?.close()
-        det = null; rec = null
+        det?.close()
+        rec?.close()
+        det = null
+        rec = null
     }
 
     fun ocr(bitmap: Bitmap): List<TextRegion> {
@@ -110,11 +121,12 @@ class OcrEngine(context: Context) {
             for (y in 0 until h) {
                 for (x in 0 until w) {
                     val p = px[y * w + x]
-                    val v = when (c) {
-                        0 -> p and 0xff
-                        1 -> (p shr 8) and 0xff
-                        else -> (p shr 16) and 0xff
-                    }
+                    val v =
+                        when (c) {
+                            0 -> p and 0xff
+                            1 -> (p shr 8) and 0xff
+                            else -> (p shr 16) and 0xff
+                        }
                     fb.put((v / 255f - mean) / std)
                 }
             }
@@ -158,7 +170,8 @@ class OcrEngine(context: Context) {
                     val cur = queue[head++]
                     val cx = cur % w
                     val cy = cur / w
-                    pts.add(cx); pts.add(cy)
+                    pts.add(cx)
+                    pts.add(cy)
                     score += prob[cy][cx]
                     for (k in 0 until 4) {
                         val nx = cx + dx[k]
@@ -196,7 +209,10 @@ class OcrEngine(context: Context) {
         return boxes
     }
 
-    private fun rotateCrop(src: Bitmap, quad: FloatArray): Bitmap? {
+    private fun rotateCrop(
+        src: Bitmap,
+        quad: FloatArray,
+    ): Bitmap? {
         for (v in quad) {
             if (v.isNaN() || v.isInfinite()) return null
         }
@@ -207,10 +223,14 @@ class OcrEngine(context: Context) {
             twice += quad[k * 2] * quad[j * 2 + 1] - quad[j * 2] * quad[k * 2 + 1]
         }
         if (kotlin.math.abs(twice) < 1e-4f) return null
-        val x0 = quad[0] * src.width; val y0 = quad[1] * src.height
-        val x1 = quad[2] * src.width; val y1 = quad[3] * src.height
-        val x2 = quad[4] * src.width; val y2 = quad[5] * src.height
-        val x3 = quad[6] * src.width; val y3 = quad[7] * src.height
+        val x0 = quad[0] * src.width
+        val y0 = quad[1] * src.height
+        val x1 = quad[2] * src.width
+        val y1 = quad[3] * src.height
+        val x2 = quad[4] * src.width
+        val y2 = quad[5] * src.height
+        val x3 = quad[6] * src.width
+        val y3 = quad[7] * src.height
         val w = max(1, max(dist(x0, y0, x1, y1), dist(x3, y3, x2, y2)).toInt())
         val h = max(1, max(dist(x0, y0, x3, y3), dist(x1, y1, x2, y2)).toInt())
         if (w > src.width * 2 || h > src.height * 2) return null
@@ -229,8 +249,14 @@ class OcrEngine(context: Context) {
         }.getOrNull()
     }
 
-    private fun dist(x0: Float, y0: Float, x1: Float, y1: Float): Float {
-        val ddx = x1 - x0; val ddy = y1 - y0
+    private fun dist(
+        x0: Float,
+        y0: Float,
+        x1: Float,
+        y1: Float,
+    ): Float {
+        val ddx = x1 - x0
+        val ddy = y1 - y0
         return sqrt(ddx * ddx + ddy * ddy)
     }
 
@@ -246,11 +272,12 @@ class OcrEngine(context: Context) {
             for (y in 0 until REC_HEIGHT) {
                 for (x in 0 until newW) {
                     val p = px[y * newW + x]
-                    val v = when (c) {
-                        0 -> p and 0xff
-                        1 -> (p shr 8) and 0xff
-                        else -> (p shr 16) and 0xff
-                    }
+                    val v =
+                        when (c) {
+                            0 -> p and 0xff
+                            1 -> (p shr 8) and 0xff
+                            else -> (p shr 16) and 0xff
+                        }
                     fb.put((v / 255f - 0.5f) / 0.5f)
                 }
             }
@@ -274,10 +301,16 @@ class OcrEngine(context: Context) {
         for (row in seq) {
             var maxI = 0
             var maxV = Float.NEGATIVE_INFINITY
-            for (i in row.indices) if (row[i] > maxV) { maxV = row[i]; maxI = i }
+            for (i in row.indices) {
+                if (row[i] > maxV) {
+                    maxV = row[i]
+                    maxI = i
+                }
+            }
             if (maxI != 0 && maxI != prev) {
                 sb.append(if (maxI - 1 < d.size) d[maxI - 1] else " ")
-                confSum += maxV; confN++
+                confSum += maxV
+                confN++
             }
             prev = maxI
         }

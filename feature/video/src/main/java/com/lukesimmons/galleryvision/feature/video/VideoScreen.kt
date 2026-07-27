@@ -79,53 +79,60 @@ fun VideoScreen(
         AndroidView(
             factory = { ctx ->
                 SurfaceView(ctx).apply {
-                    holder.addCallback(object : SurfaceHolder.Callback {
-                        override fun surfaceCreated(h: SurfaceHolder) {
-                            surface = h.surface
-                        }
+                    holder.addCallback(
+                        object : SurfaceHolder.Callback {
+                            override fun surfaceCreated(h: SurfaceHolder) {
+                                surface = h.surface
+                            }
 
-                        override fun surfaceChanged(h: SurfaceHolder, f: Int, w: Int, ht: Int) {
-                            controller?.setSurfaceSize(w, ht)
-                        }
+                            override fun surfaceChanged(
+                                h: SurfaceHolder,
+                                f: Int,
+                                w: Int,
+                                ht: Int,
+                            ) {
+                                controller?.setSurfaceSize(w, ht)
+                            }
 
-                        override fun surfaceDestroyed(h: SurfaceHolder) {
-                            surface = null
-                            controller?.detachSurface()
-                        }
-                    })
+                            override fun surfaceDestroyed(h: SurfaceHolder) {
+                                surface = null
+                                controller?.detachSurface()
+                            }
+                        },
+                    )
                 }
             },
             modifier = Modifier.fillMaxSize(),
         )
 
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .playerGestures(
-                    onSeekStart = {
-                        scrubbing = true
-                        scrubMs = player.positionMs
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .playerGestures(
+                        onSeekStart = {
+                            scrubbing = true
+                            scrubMs = player.positionMs
+                        },
+                        onSeekDelta = { delta ->
+                            val dur = player.durationMs
+                            scrubMs = (scrubMs + delta).coerceIn(0L, if (dur > 0) dur else Long.MAX_VALUE)
+                        },
+                        onSeekEnd = {
+                            controller?.seekTo(scrubMs)
+                            scrubbing = false
+                        },
+                        onVolume = { frac ->
+                            volumeLevel = adjustVolume(audioManager, frac, volumeLevel)
+                        },
+                        onBrightness = { frac -> adjustBrightness(context, frac) },
+                        onZoom = { factor -> controller?.zoomBy(factor) },
+                    ).pointerInput(Unit) {
+                        detectTapGestures(
+                            onTap = { controlsVisible = !controlsVisible },
+                            onDoubleTap = { controller?.playPause() },
+                        )
                     },
-                    onSeekDelta = { delta ->
-                        val dur = player.durationMs
-                        scrubMs = (scrubMs + delta).coerceIn(0L, if (dur > 0) dur else Long.MAX_VALUE)
-                    },
-                    onSeekEnd = {
-                        controller?.seekTo(scrubMs)
-                        scrubbing = false
-                    },
-                    onVolume = { frac ->
-                        volumeLevel = adjustVolume(audioManager, frac, volumeLevel)
-                    },
-                    onBrightness = { frac -> adjustBrightness(context, frac) },
-                    onZoom = { factor -> controller?.zoomBy(factor) },
-                )
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onTap = { controlsVisible = !controlsVisible },
-                        onDoubleTap = { controller?.playPause() },
-                    )
-                },
         )
 
         if (scrubbing) {
@@ -139,15 +146,17 @@ fun VideoScreen(
 
         val error = ui.error ?: player.error
         when {
-            error != null -> Text(
-                text = error,
-                color = Color.White,
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.align(Alignment.Center).padding(24.dp),
-            )
-            ui.loading || (!player.ready && !scrubbing) -> CircularProgressIndicator(
-                modifier = Modifier.align(Alignment.Center),
-            )
+            error != null ->
+                Text(
+                    text = error,
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.align(Alignment.Center).padding(24.dp),
+                )
+            ui.loading || (!player.ready && !scrubbing) ->
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center),
+                )
         }
 
         if (controlsVisible && !scrubbing) {
@@ -174,10 +183,11 @@ private fun ControlsBar(
 ) {
     var sliderPos by remember(positionMs) { mutableFloatStateOf(positionMs.toFloat()) }
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(Color(0x99000000))
-            .padding(horizontal = 16.dp, vertical = 4.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .background(Color(0x99000000))
+                .padding(horizontal = 16.dp, vertical = 4.dp),
     ) {
         Slider(
             value = sliderPos.coerceIn(0f, durationMs.toFloat().coerceAtLeast(1f)),
@@ -203,7 +213,11 @@ private fun ControlsBar(
     }
 }
 
-private fun adjustVolume(audioManager: AudioManager, fractionDelta: Float, level: Float): Float {
+private fun adjustVolume(
+    audioManager: AudioManager,
+    fractionDelta: Float,
+    level: Float,
+): Float {
     val stream = AudioManager.STREAM_MUSIC
     val max = audioManager.getStreamMaxVolume(stream).toFloat()
     val base = if (level.isNaN()) audioManager.getStreamVolume(stream).toFloat() else level
@@ -215,7 +229,10 @@ private fun adjustVolume(audioManager: AudioManager, fractionDelta: Float, level
     return next
 }
 
-private fun adjustBrightness(context: Context, fractionDelta: Float) {
+private fun adjustBrightness(
+    context: Context,
+    fractionDelta: Float,
+) {
     val activity = context as? Activity ?: return
     val attrs = activity.window.attributes
     val current = if (attrs.screenBrightness < 0f) 0.5f else attrs.screenBrightness

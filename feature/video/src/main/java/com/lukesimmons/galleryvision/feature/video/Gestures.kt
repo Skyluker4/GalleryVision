@@ -25,59 +25,61 @@ fun Modifier.playerGestures(
     onVolume: (fractionDelta: Float) -> Unit,
     onBrightness: (fractionDelta: Float) -> Unit,
     onZoom: (factor: Float) -> Unit,
-): Modifier = pointerInput(Unit) {
-    awaitEachGesture {
-        val down = awaitFirstDown(requireUnconsumed = false)
-        val start = down.position
-        val slop = viewConfiguration.touchSlop
-        var mode: DragMode? = null
-        var prevSpan = -1f
+): Modifier =
+    pointerInput(Unit) {
+        awaitEachGesture {
+            val down = awaitFirstDown(requireUnconsumed = false)
+            val start = down.position
+            val slop = viewConfiguration.touchSlop
+            var mode: DragMode? = null
+            var prevSpan = -1f
 
-        while (true) {
-            val event = awaitPointerEvent()
-            val pressed = event.changes.filter { it.pressed }
-            if (pressed.isEmpty()) {
-                if (mode == DragMode.SEEK) onSeekEnd()
-                break
-            }
-
-            if (pressed.size >= 2) {
-                val span = (pressed[0].position - pressed[1].position).getDistance()
-                if (prevSpan > 0f && span > 0f) {
-                    val factor = span / prevSpan
-                    if (factor != 1f) onZoom(factor)
+            while (true) {
+                val event = awaitPointerEvent()
+                val pressed = event.changes.filter { it.pressed }
+                if (pressed.isEmpty()) {
+                    if (mode == DragMode.SEEK) onSeekEnd()
+                    break
                 }
-                prevSpan = span
-                pressed.forEach { if (it.positionChange() != Offset.Zero) it.consume() }
-                mode = DragMode.ZOOM
-                continue
-            }
 
-            val change = pressed[0]
-            if (mode == null) {
-                val total = change.position - start
-                if (total.getDistance() < slop) continue
-                mode = when {
-                    abs(total.x) >= abs(total.y) -> DragMode.SEEK
-                    start.x < size.width / 2f -> DragMode.BRIGHTNESS
-                    else -> DragMode.VOLUME
+                if (pressed.size >= 2) {
+                    val span = (pressed[0].position - pressed[1].position).getDistance()
+                    if (prevSpan > 0f && span > 0f) {
+                        val factor = span / prevSpan
+                        if (factor != 1f) onZoom(factor)
+                    }
+                    prevSpan = span
+                    pressed.forEach { if (it.positionChange() != Offset.Zero) it.consume() }
+                    mode = DragMode.ZOOM
+                    continue
                 }
-                if (mode == DragMode.SEEK) onSeekStart()
-            }
 
-            val delta = change.positionChange()
-            when (mode) {
-                DragMode.SEEK -> {
-                    val deltaMs = (delta.x / size.width * SEEK_FULL_WIDTH_MS).toLong()
-                    if (deltaMs != 0L) onSeekDelta(deltaMs)
+                val change = pressed[0]
+                if (mode == null) {
+                    val total = change.position - start
+                    if (total.getDistance() < slop) continue
+                    mode =
+                        when {
+                            abs(total.x) >= abs(total.y) -> DragMode.SEEK
+                            start.x < size.width / 2f -> DragMode.BRIGHTNESS
+                            else -> DragMode.VOLUME
+                        }
+                    if (mode == DragMode.SEEK) onSeekStart()
                 }
-                DragMode.VOLUME -> onVolume(-delta.y / size.height)
-                DragMode.BRIGHTNESS -> onBrightness(-delta.y / size.height)
-                else -> Unit
+
+                val delta = change.positionChange()
+                when (mode) {
+                    DragMode.SEEK -> {
+                        val deltaMs = (delta.x / size.width * SEEK_FULL_WIDTH_MS).toLong()
+                        if (deltaMs != 0L) onSeekDelta(deltaMs)
+                    }
+                    DragMode.VOLUME -> onVolume(-delta.y / size.height)
+                    DragMode.BRIGHTNESS -> onBrightness(-delta.y / size.height)
+                    else -> Unit
+                }
+                if (delta != Offset.Zero) change.consume()
             }
-            if (delta != Offset.Zero) change.consume()
         }
     }
-}
 
 private const val SEEK_FULL_WIDTH_MS = 90_000

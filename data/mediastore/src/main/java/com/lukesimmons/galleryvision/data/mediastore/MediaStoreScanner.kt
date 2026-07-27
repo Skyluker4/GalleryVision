@@ -12,16 +12,22 @@ import com.lukesimmons.galleryvision.core.model.MediaType
  * Reads images and videos from MediaStore (the system source of truth) into Room read-model
  * entities. Folder tree ids are derived from the directory path so they are stable across scans.
  */
-class MediaStoreScanner(private val context: Context) {
-
-    data class ScanResult(val media: List<MediaEntity>, val folders: List<FolderEntity>)
+class MediaStoreScanner(
+    private val context: Context,
+) {
+    data class ScanResult(
+        val media: List<MediaEntity>,
+        val folders: List<FolderEntity>,
+    )
 
     private fun folderIdFor(path: String): Long = path.lowercase().hashCode().toLong()
 
-    private fun parentPathOf(folderPath: String): String? =
-        folderPath.substringBeforeLast('/', "").ifEmpty { null }
+    private fun parentPathOf(folderPath: String): String? = folderPath.substringBeforeLast('/', "").ifEmpty { null }
 
-    private fun typeFor(mediaType: Int, path: String): MediaType {
+    private fun typeFor(
+        mediaType: Int,
+        path: String,
+    ): MediaType {
         if (mediaType == MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO) return MediaType.VIDEO
         val lower = path.lowercase()
         return when {
@@ -35,7 +41,10 @@ class MediaStoreScanner(private val context: Context) {
         }
     }
 
-    private fun sniffsAs(path: String, test: (ByteArray, Int) -> Boolean): Boolean {
+    private fun sniffsAs(
+        path: String,
+        test: (ByteArray, Int) -> Boolean,
+    ): Boolean {
         val (buf, n) = AnimatedSniff.readHeader(path) ?: return false
         return test(buf, n)
     }
@@ -45,24 +54,28 @@ class MediaStoreScanner(private val context: Context) {
         val folders = mutableMapOf<Long, FolderEntity>()
 
         val collection = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL)
-        val projection = arrayOf(
-            MediaStore.Files.FileColumns._ID,
-            MediaStore.Files.FileColumns.DATA,
-            MediaStore.Files.FileColumns.MEDIA_TYPE,
-            MediaStore.Files.FileColumns.DATE_TAKEN,
-            MediaStore.Files.FileColumns.DATE_ADDED,
-            MediaStore.Files.FileColumns.DATE_MODIFIED,
-            MediaStore.Files.FileColumns.WIDTH,
-            MediaStore.Files.FileColumns.HEIGHT,
-            MediaStore.Files.FileColumns.DURATION,
-            "latitude",   // redacted unless ACCESS_MEDIA_LOCATION; constant removed in API 36
-            "longitude",
-        )
+        val projection =
+            arrayOf(
+                MediaStore.Files.FileColumns._ID,
+                MediaStore.Files.FileColumns.DATA,
+                MediaStore.Files.FileColumns.MEDIA_TYPE,
+                MediaStore.Files.FileColumns.DATE_TAKEN,
+                MediaStore.Files.FileColumns.DATE_ADDED,
+                MediaStore.Files.FileColumns.DATE_MODIFIED,
+                MediaStore.Files.FileColumns.WIDTH,
+                MediaStore.Files.FileColumns.HEIGHT,
+                MediaStore.Files.FileColumns.DURATION,
+                "latitude", // redacted unless ACCESS_MEDIA_LOCATION; constant removed in API 36
+                "longitude",
+            )
         val selection = "${MediaStore.Files.FileColumns.MEDIA_TYPE} IN (?, ?)"
-        val args = arrayOf(
-            MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE.toString(),
-            MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO.toString(),
-        )
+        val args =
+            arrayOf(
+                MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE
+                    .toString(),
+                MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO
+                    .toString(),
+            )
         val sort = "${MediaStore.Files.FileColumns.DATE_ADDED} DESC"
 
         context.contentResolver.query(collection, projection, selection, args, sort)?.use { c ->
@@ -97,23 +110,24 @@ class MediaStoreScanner(private val context: Context) {
                 }
 
                 val contentUri = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL, id)
-                media += MediaEntity(
-                    id = id,
-                    sourceUri = contentUri.toString(),
-                    path = path,
-                    folderId = folderId,
-                    type = type,
-                    dateTaken = if (c.isNull(takenCol)) null else c.getLong(takenCol),
-                    dateAdded = if (c.isNull(addedCol)) null else c.getLong(addedCol) * 1000,
-                    dateModified = if (c.isNull(modifiedCol)) null else c.getLong(modifiedCol) * 1000,
-                    dateCreated = null, // file birth time resolved in M3
-                    latitude = if (latCol < 0 || c.isNull(latCol)) null else c.getDouble(latCol),
-                    longitude = if (lonCol < 0 || c.isNull(lonCol)) null else c.getDouble(lonCol),
-                    width = if (c.isNull(widthCol)) 0 else c.getInt(widthCol),
-                    height = if (c.isNull(heightCol)) 0 else c.getInt(heightCol),
-                    durationMs = if (c.isNull(durationCol)) null else c.getLong(durationCol),
-                    scanGeneration = generation,
-                )
+                media +=
+                    MediaEntity(
+                        id = id,
+                        sourceUri = contentUri.toString(),
+                        path = path,
+                        folderId = folderId,
+                        type = type,
+                        dateTaken = if (c.isNull(takenCol)) null else c.getLong(takenCol),
+                        dateAdded = if (c.isNull(addedCol)) null else c.getLong(addedCol) * 1000,
+                        dateModified = if (c.isNull(modifiedCol)) null else c.getLong(modifiedCol) * 1000,
+                        dateCreated = null, // file birth time resolved in M3
+                        latitude = if (latCol < 0 || c.isNull(latCol)) null else c.getDouble(latCol),
+                        longitude = if (lonCol < 0 || c.isNull(lonCol)) null else c.getDouble(lonCol),
+                        width = if (c.isNull(widthCol)) 0 else c.getInt(widthCol),
+                        height = if (c.isNull(heightCol)) 0 else c.getInt(heightCol),
+                        durationMs = if (c.isNull(durationCol)) null else c.getLong(durationCol),
+                        scanGeneration = generation,
+                    )
             }
         }
         return ScanResult(media, folders.values.toList())

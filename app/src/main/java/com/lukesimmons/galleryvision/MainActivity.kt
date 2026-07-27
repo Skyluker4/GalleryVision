@@ -124,9 +124,10 @@ fun MediaPermissionGate() {
     val context = LocalContext.current
     val permissions = remember { mediaPermissions() }
     var granted by remember { mutableStateOf(hasMediaAccess(context)) }
-    val launcher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions(),
-    ) { result -> granted = result.values.all { it } }
+    val launcher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions(),
+        ) { result -> granted = result.values.all { it } }
 
     if (granted) {
         AppNavHost()

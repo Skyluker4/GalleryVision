@@ -17,7 +17,6 @@ import com.lukesimmons.galleryvision.core.model.SortSpec
  * is then only used to narrow candidates, never to decide regex membership.
  */
 object QueryCompiler {
-
     data class CompiledQuery(
         val where: String,
         val args: List<Any?>,
@@ -28,13 +27,17 @@ object QueryCompiler {
     private class Ctx {
         val args = ArrayList<Any?>()
         var hasRegex = false
+
         fun arg(v: Any?): String {
             args.add(v)
             return "?"
         }
     }
 
-    fun compile(spec: SearchSpec, sort: SortSpec? = null): CompiledQuery {
+    fun compile(
+        spec: SearchSpec,
+        sort: SortSpec? = null,
+    ): CompiledQuery {
         val ctx = Ctx()
         val where = ctx.emit(spec)
         return CompiledQuery(
@@ -67,12 +70,19 @@ object QueryCompiler {
 
     private fun Ctx.emitXor(terms: List<SearchSpec>): String {
         if (terms.isEmpty()) return "1=0"
+
         // Left-associative binary XOR: A XOR B == (A OR B) AND NOT (A AND B).
-        fun xor2(a: String, b: String) = "(( $a ) OR ( $b )) AND NOT (( $a ) AND ( $b ))"
+        fun xor2(
+            a: String,
+            b: String,
+        ) = "(( $a ) OR ( $b )) AND NOT (( $a ) AND ( $b ))"
         return terms.map { emit(it) }.reduce { acc, next -> xor2(acc, next) }
     }
 
-    private fun Ctx.emitPredicate(field: SearchField, matcher: Matcher): String {
+    private fun Ctx.emitPredicate(
+        field: SearchField,
+        matcher: Matcher,
+    ): String {
         if (matcher is Matcher.Regex) {
             hasRegex = true
             return "1=1" // caller narrows candidates; regex membership decided in Kotlin
@@ -91,7 +101,10 @@ object QueryCompiler {
         }
     }
 
-    private fun Ctx.stringClause(column: String, matcher: Matcher): String =
+    private fun Ctx.stringClause(
+        column: String,
+        matcher: Matcher,
+    ): String =
         when (matcher) {
             is Matcher.Literal -> "$column LIKE ${arg(likeEscape(matcher.value, '%'))} ESCAPE '\\'"
             is Matcher.Phrase -> "$column LIKE ${arg(likeEscape(matcher.value, '%'))} ESCAPE '\\'"
@@ -100,15 +113,19 @@ object QueryCompiler {
             is Matcher.Regex -> "1=1"
         }
 
-    private fun Ctx.dateClause(column: String, matcher: Matcher): String =
+    private fun Ctx.dateClause(
+        column: String,
+        matcher: Matcher,
+    ): String =
         when (matcher) {
-            is Matcher.Range -> buildString {
-                append("( ")
-                if (matcher.from != null) append("$column >= ${arg(matcher.from)}") else append("1=1")
-                append(" AND ")
-                if (matcher.to != null) append("$column <= ${arg(matcher.to)}") else append("1=1")
-                append(" )")
-            }
+            is Matcher.Range ->
+                buildString {
+                    append("( ")
+                    if (matcher.from != null) append("$column >= ${arg(matcher.from)}") else append("1=1")
+                    append(" AND ")
+                    if (matcher.to != null) append("$column <= ${arg(matcher.to)}") else append("1=1")
+                    append(" )")
+                }
             else -> stringClause(column, matcher)
         }
 
@@ -116,7 +133,10 @@ object QueryCompiler {
         "EXISTS (SELECT 1 FROM detection d WHERE d.mediaId = media.id AND d.kind = 'TEXT' AND " +
             stringClause("d.valueText", matcher) + ")"
 
-    private fun Ctx.existsLabel(kind: String, matcher: Matcher): String =
+    private fun Ctx.existsLabel(
+        kind: String,
+        matcher: Matcher,
+    ): String =
         "EXISTS (SELECT 1 FROM detection d WHERE d.mediaId = media.id AND d.kind = '$kind' AND " +
             stringClause("d.label", matcher) + ")"
 
@@ -132,11 +152,15 @@ object QueryCompiler {
         "EXISTS (SELECT 1 FROM note n WHERE n.targetKind = 'MEDIA' AND n.targetId = media.id AND " +
             stringClause("n.body", matcher) + ")"
 
-    private fun likeEscape(value: String, wrap: Char): String {
-        val escaped = value
-            .replace("\\", "\\\\")
-            .replace("%", "\\%")
-            .replace("_", "\\_")
+    private fun likeEscape(
+        value: String,
+        wrap: Char,
+    ): String {
+        val escaped =
+            value
+                .replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_")
         return if (wrap == '%') "%$escaped%" else escaped
     }
 
@@ -157,18 +181,29 @@ object QueryCompiler {
 
     private fun orderBy(sort: SortSpec?): String {
         if (sort == null) return "ORDER BY COALESCE(media.dateTaken, media.dateAdded, media.dateModified, 0) DESC"
-        val column = when (sort.field) {
-            SearchField.PATH -> "media.path"
-            SearchField.CREATED -> "media.dateCreated"
-            SearchField.MODIFIED -> "media.dateModified"
-            SearchField.ADDED -> "media.dateAdded"
-            SearchField.TAKEN -> "media.dateTaken"
-            SearchField.TEXT -> "(SELECT d.valueText FROM detection d WHERE d.mediaId = media.id AND d.kind = 'TEXT' ORDER BY d.confidence DESC LIMIT 1)"
-            SearchField.OBJECT -> "(SELECT d.label FROM detection d WHERE d.mediaId = media.id AND d.kind = 'OBJECT' ORDER BY d.confidence DESC LIMIT 1)"
-            SearchField.TAG -> "(SELECT t.name FROM media_tag mt JOIN tag t ON t.id = mt.tagId WHERE mt.mediaId = media.id ORDER BY t.name LIMIT 1)"
-            SearchField.FACE -> "(SELECT fc.name FROM detection d JOIN face_cluster fc ON fc.id = d.clusterId WHERE d.mediaId = media.id AND d.kind = 'FACE' ORDER BY fc.name LIMIT 1)"
-            SearchField.NOTE -> "(SELECT n.body FROM note n WHERE n.targetKind = 'MEDIA' AND n.targetId = media.id ORDER BY n.id LIMIT 1)"
-        }
+        val column =
+            when (sort.field) {
+                SearchField.PATH -> "media.path"
+                SearchField.CREATED -> "media.dateCreated"
+                SearchField.MODIFIED -> "media.dateModified"
+                SearchField.ADDED -> "media.dateAdded"
+                SearchField.TAKEN -> "media.dateTaken"
+                SearchField.TEXT ->
+                    "(SELECT d.valueText FROM detection d WHERE d.mediaId = media.id" +
+                        " AND d.kind = 'TEXT' ORDER BY d.confidence DESC LIMIT 1)"
+                SearchField.OBJECT ->
+                    "(SELECT d.label FROM detection d WHERE d.mediaId = media.id" +
+                        " AND d.kind = 'OBJECT' ORDER BY d.confidence DESC LIMIT 1)"
+                SearchField.TAG ->
+                    "(SELECT t.name FROM media_tag mt JOIN tag t ON t.id = mt.tagId" +
+                        " WHERE mt.mediaId = media.id ORDER BY t.name LIMIT 1)"
+                SearchField.FACE ->
+                    "(SELECT fc.name FROM detection d JOIN face_cluster fc ON fc.id = d.clusterId" +
+                        " WHERE d.mediaId = media.id AND d.kind = 'FACE' ORDER BY fc.name LIMIT 1)"
+                SearchField.NOTE ->
+                    "(SELECT n.body FROM note n WHERE n.targetKind = 'MEDIA'" +
+                        " AND n.targetId = media.id ORDER BY n.id LIMIT 1)"
+            }
         val dir = if (sort.direction == SortDirection.DESC) "DESC" else "ASC"
         return "ORDER BY $column $dir, media.id ASC"
     }

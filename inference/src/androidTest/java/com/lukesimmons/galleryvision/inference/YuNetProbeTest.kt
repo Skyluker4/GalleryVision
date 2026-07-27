@@ -16,8 +16,10 @@ import java.nio.FloatBuffer
 /** Probes YuNet output score ranges on a real face to determine if sigmoid is needed. */
 @RunWith(AndroidJUnit4::class)
 class YuNetProbeTest {
-
-    private fun out2d(result: OrtSession.Result, name: String): Array<FloatArray> {
+    private fun out2d(
+        result: OrtSession.Result,
+        name: String,
+    ): Array<FloatArray> {
         for (entry in result) {
             if (entry.key == name) {
                 @Suppress("UNCHECKED_CAST")
@@ -34,9 +36,11 @@ class YuNetProbeTest {
         val env = OrtEnvironment.getEnvironment()
         val session = env.createSession(ctx.assets.open("models/face/yunet.onnx").readBytes())
 
-        val inputName = session.inputInfo.entries
-            .firstOrNull { (it.value.info as? TensorInfo)?.shape?.size == 4 }?.key
-            ?: session.inputNames.first()
+        val inputName =
+            session.inputInfo.entries
+                .firstOrNull { (it.value.info as? TensorInfo)?.shape?.size == 4 }
+                ?.key
+                ?: session.inputNames.first()
 
         val src = BitmapFactory.decodeStream(testCtx.assets.open("face.jpg"))
         val resized = android.graphics.Bitmap.createScaledBitmap(src, 640, 640, true)
@@ -47,11 +51,12 @@ class YuNetProbeTest {
             for (y in 0 until 640) {
                 for (x in 0 until 640) {
                     val p = px[y * 640 + x]
-                    val v = when (c) {
-                        0 -> (p shr 16) and 0xff
-                        1 -> (p shr 8) and 0xff
-                        else -> p and 0xff
-                    }
+                    val v =
+                        when (c) {
+                            0 -> (p shr 16) and 0xff
+                            1 -> (p shr 8) and 0xff
+                            else -> p and 0xff
+                        }
                     fb.put(v / 255f)
                 }
             }
@@ -66,11 +71,19 @@ class YuNetProbeTest {
                 var topIdx = 0
                 var topVal = -Float.MAX_VALUE
                 for ((name, data) in listOf("cls" to cls, "obj" to obj)) {
-                    var mn = Float.MAX_VALUE; var mx = -Float.MAX_VALUE; var sum = 0.0
+                    var mn = Float.MAX_VALUE
+                    var mx = -Float.MAX_VALUE
+                    var sum = 0.0
                     for (i in data.indices) {
                         val v = data[i][0]
                         if (v < mn) mn = v
-                        if (v > mx) { mx = v; if (name == "cls") { topVal = v; topIdx = i } }
+                        if (v > mx) {
+                            mx = v
+                            if (name == "cls") {
+                                topVal = v
+                                topIdx = i
+                            }
+                        }
                         sum += v
                     }
                     println("PROBE $name: min=$mn max=$mx mean=${sum / data.size}")

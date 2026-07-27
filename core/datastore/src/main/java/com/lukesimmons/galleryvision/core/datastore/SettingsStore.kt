@@ -14,8 +14,9 @@ import kotlinx.coroutines.flow.map
 private val Context.dataStore by preferencesDataStore(name = "settings")
 
 /** User-tunable settings and the custom OCR dictionary, persisted in DataStore. */
-class SettingsStore(private val context: Context) {
-
+class SettingsStore(
+    private val context: Context,
+) {
     private object Keys {
         val DICTIONARY = stringSetPreferencesKey("custom_dictionary")
         val ALLOW_LIST_ONLY = booleanPreferencesKey("allow_list_only")

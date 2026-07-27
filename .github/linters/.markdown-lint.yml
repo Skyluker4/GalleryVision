@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (C) 2026 Luke Simmons <luke5083@live.com>
+# markdownlint config for docs with long prose lines and inline HTML.
+default: true
+MD013: false
+MD033: false
+MD041: false

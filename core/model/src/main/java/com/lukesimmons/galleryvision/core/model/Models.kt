@@ -72,14 +72,16 @@ data class Detection(
     val clusterId: Long?,
     val edited: Boolean,
 ) {
-    override fun equals(other: Any?): Boolean =
-        this === other || (other is Detection && other.id == id)
+    override fun equals(other: Any?): Boolean = this === other || (other is Detection && other.id == id)
 
     override fun hashCode(): Int = id.hashCode()
 }
 
 /** A user-defined tag. */
-data class Tag(val id: Long, val name: String)
+data class Tag(
+    val id: Long,
+    val name: String,
+)
 
 /** A named cluster of faces, optionally linked to a contact. */
 data class FaceCluster(
@@ -108,7 +110,13 @@ data class Note(
 )
 
 /** A deny-list entry; matched detections/words are hidden at query time. */
-data class DenyEntry(val kind: DenyKind, val value: String)
+data class DenyEntry(
+    val kind: DenyKind,
+    val value: String,
+)
 
 /** A per-folder visibility policy. */
-data class FolderPolicy(val folderId: Long, val mode: FolderPolicyMode)
+data class FolderPolicy(
+    val folderId: Long,
+    val mode: FolderPolicyMode,
+)

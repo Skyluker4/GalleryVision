@@ -8,8 +8,11 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class ThreadNotesTest {
-
-    private fun note(id: Long, parent: Long?, body: String = "n$id") = NoteEntity(
+    private fun note(
+        id: Long,
+        parent: Long?,
+        body: String = "n$id",
+    ) = NoteEntity(
         id = id,
         targetKind = NoteTargetKind.MEDIA,
         targetId = 1,
@@ -24,12 +27,13 @@ class ThreadNotesTest {
 
     @Test
     fun repliesNestUnderParentsInOrder() {
-        val notes = listOf(
-            note(3, 1),
-            note(1, null),
-            note(4, 3),
-            note(2, null),
-        )
+        val notes =
+            listOf(
+                note(3, 1),
+                note(1, null),
+                note(4, 3),
+                note(2, null),
+            )
         val threaded = threadNotes(notes)
         assertEquals(listOf(1L, 3L, 4L, 2L), threaded.map { it.first.id })
         assertEquals(listOf(0, 1, 2, 0), threaded.map { it.second })

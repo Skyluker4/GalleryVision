@@ -2,12 +2,12 @@
 // Copyright (C) 2026 Luke Simmons <luke5083@live.com>
 package com.lukesimmons.galleryvision
 
-import android.graphics.BitmapFactory
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
 import ai.onnxruntime.OnnxTensor
 import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
+import android.graphics.BitmapFactory
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -22,12 +22,18 @@ import kotlin.math.max
  */
 @RunWith(AndroidJUnit4::class)
 class OrtRecTest {
-
     private fun loadDict(ctx: android.content.Context): List<String> =
-        ctx.assets.open("models/ppocrv5/ppocrv5_dict.txt").bufferedReader().useLines { it.toList() }
+        ctx.assets
+            .open("models/ppocrv5/ppocrv5_dict.txt")
+            .bufferedReader()
+            .useLines { it.toList() }
 
     /** Preprocess to NCHW float32 [1,3,48,W], BGR order (matches PaddleOCR), (x/255-0.5)/0.5. */
-    private fun toTensor(env: OrtEnvironment, ctx: android.content.Context, asset: String): Pair<OnnxTensor, LongArray> {
+    private fun toTensor(
+        env: OrtEnvironment,
+        ctx: android.content.Context,
+        asset: String,
+    ): Pair<OnnxTensor, LongArray> {
         val bmp = BitmapFactory.decodeStream(ctx.assets.open(asset))
         val newW = max(1, 48 * bmp.width / bmp.height)
         val scaled = android.graphics.Bitmap.createScaledBitmap(bmp, newW, 48, true)
@@ -38,11 +44,12 @@ class OrtRecTest {
             for (y in 0 until 48) {
                 for (x in 0 until newW) {
                     val p = px[y * newW + x]
-                    val v = when (c) {
-                        0 -> p and 0xff              // B
-                        1 -> (p shr 8) and 0xff      // G
-                        else -> (p shr 16) and 0xff  // R
-                    }
+                    val v =
+                        when (c) {
+                            0 -> p and 0xff // B
+                            1 -> (p shr 8) and 0xff // G
+                            else -> (p shr 16) and 0xff // R
+                        }
                     fb.put((v / 255f - 0.5f) / 0.5f)
                 }
             }
@@ -52,7 +59,10 @@ class OrtRecTest {
         return OnnxTensor.createTensor(env, fb, shape) to shape
     }
 
-    private fun ctcDecode(seq: Array<FloatArray>, dict: List<String>): Pair<String, Float> {
+    private fun ctcDecode(
+        seq: Array<FloatArray>,
+        dict: List<String>,
+    ): Pair<String, Float> {
         val sb = StringBuilder()
         var prev = -1
         var confSum = 0f
@@ -60,10 +70,16 @@ class OrtRecTest {
         for (row in seq) {
             var maxI = 0
             var maxV = Float.NEGATIVE_INFINITY
-            for (i in row.indices) if (row[i] > maxV) { maxV = row[i]; maxI = i }
+            for (i in row.indices) {
+                if (row[i] > maxV) {
+                    maxV = row[i]
+                    maxI = i
+                }
+            }
             if (maxI != 0 && maxI != prev) {
                 sb.append(if (maxI - 1 < dict.size) dict[maxI - 1] else " ")
-                confSum += maxV; confN++
+                confSum += maxV
+                confN++
             }
             prev = maxI
         }
@@ -78,9 +94,10 @@ class OrtRecTest {
         assertEquals("v5 dict size", 18383, dict.size)
 
         val modelBytes = ctx.assets.open("models/ppocrv5/rec.onnx").readBytes()
-        val opts = OrtSession.SessionOptions().apply {
-            addXnnpack(emptyMap()) // XNNPACK EP; we intentionally never add NNAPI (deprecated)
-        }
+        val opts =
+            OrtSession.SessionOptions().apply {
+                addXnnpack(emptyMap()) // XNNPACK EP; we intentionally never add NNAPI (deprecated)
+            }
         env.createSession(modelBytes, opts).use { session ->
             val (tensor, _) = toTensor(env, ctx, "images/rec_1.jpg")
             tensor.use { t ->

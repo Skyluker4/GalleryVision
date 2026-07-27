@@ -20,21 +20,35 @@ import com.lukesimmons.galleryvision.core.model.SearchSpec
  * matcher := "phrase" | /regex/ | wildcard*? | literal | date..range | >date | <date
  */
 object QueryParser {
-
-    class ParseException(message: String) : Exception(message)
+    class ParseException(
+        message: String,
+    ) : Exception(message)
 
     private sealed interface Tok {
         data object LParen : Tok
+
         data object RParen : Tok
+
         data object And : Tok
+
         data object Or : Tok
+
         data object Xor : Tok
+
         data object Not : Tok
-        data class Field(val name: String) : Tok
-        data class Word(val value: String) : Tok
+
+        data class Field(
+            val name: String,
+        ) : Tok
+
+        data class Word(
+            val value: String,
+        ) : Tok
     }
 
-    private class Lexer(input: String) {
+    private class Lexer(
+        input: String,
+    ) {
         val tokens: List<Tok> = tokenize(input)
 
         private fun tokenize(s: String): List<Tok> {
@@ -45,10 +59,28 @@ object QueryParser {
                 val c = s[i]
                 when {
                     c.isWhitespace() -> i++
-                    c == '(' -> { out.add(Tok.LParen); i++ }
-                    c == ')' -> { out.add(Tok.RParen); i++ }
-                    c == '"' -> { val end = s.indexOf('"', i + 1).takeIf { it >= 0 } ?: n; out.add(Tok.Word("\"" + s.substring(i + 1, end) + "\"")); i = if (end < n) end + 1 else n }
-                    c == '/' -> { val end = s.indexOf('/', i + 1).takeIf { it >= 0 } ?: n; out.add(Tok.Word("/" + s.substring(i + 1, end) + "/")); i = if (end < n) end + 1 else n }
+                    c == '(' -> {
+                        out.add(Tok.LParen)
+                        i++
+                    }
+                    c == ')' -> {
+                        out.add(Tok.RParen)
+                        i++
+                    }
+                    c == '"' -> {
+                        val end =
+                            s.indexOf('"', i + 1).takeIf { it >= 0 } ?: n
+                        out.add(Tok.Word("\"" + s.substring(i + 1, end) + "\""))
+                        i =
+                            if (end < n) end + 1 else n
+                    }
+                    c == '/' -> {
+                        val end =
+                            s.indexOf('/', i + 1).takeIf { it >= 0 } ?: n
+                        out.add(Tok.Word("/" + s.substring(i + 1, end) + "/"))
+                        i =
+                            if (end < n) end + 1 else n
+                    }
                     c.isLetter() -> {
                         var j = i
                         while (j < n && s[j].isLetter()) j++
@@ -77,12 +109,38 @@ object QueryParser {
             return out
         }
 
-        private fun readValue(s: String, start: Int, out: MutableList<Tok>): Int {
+        private fun readValue(
+            s: String,
+            start: Int,
+            out: MutableList<Tok>,
+        ): Int {
             val n = s.length
             if (start >= n) throw ParseException("Expected a value after field")
             return when (s[start]) {
-                '"' -> { val end = s.indexOf('"', start + 1).takeIf { it >= 0 } ?: n; out.add(Tok.Word("\"" + s.substring(start + 1, end) + "\"")); if (end < n) end + 1 else n }
-                '/' -> { val end = s.indexOf('/', start + 1).takeIf { it >= 0 } ?: n; out.add(Tok.Word("/" + s.substring(start + 1, end) + "/")); if (end < n) end + 1 else n }
+                '"' -> {
+                    val end =
+                        s.indexOf('"', start + 1).takeIf { it >= 0 } ?: n
+                    out.add(Tok.Word("\"" + s.substring(start + 1, end) + "\""))
+                    if (end <
+                        n
+                    ) {
+                        end + 1
+                    } else {
+                        n
+                    }
+                }
+                '/' -> {
+                    val end =
+                        s.indexOf('/', start + 1).takeIf { it >= 0 } ?: n
+                    out.add(Tok.Word("/" + s.substring(start + 1, end) + "/"))
+                    if (end <
+                        n
+                    ) {
+                        end + 1
+                    } else {
+                        n
+                    }
+                }
                 else -> {
                     var i = start
                     while (i < n && !s[i].isWhitespace() && s[i] != '(' && s[i] != ')') i++
@@ -93,16 +151,35 @@ object QueryParser {
         }
 
         private fun isFieldName(word: String): Boolean =
-            word.lowercase() in setOf(
-                "path", "name", "filename", "file", "created", "modified", "added", "taken", "date",
-                "text", "ocr", "content", "tag", "object", "face", "person", "note",
-            )
+            word.lowercase() in
+                setOf(
+                    "path",
+                    "name",
+                    "filename",
+                    "file",
+                    "created",
+                    "modified",
+                    "added",
+                    "taken",
+                    "date",
+                    "text",
+                    "ocr",
+                    "content",
+                    "tag",
+                    "object",
+                    "face",
+                    "person",
+                    "note",
+                )
     }
 
-    private class Parser(private val tokens: List<Tok>) {
+    private class Parser(
+        private val tokens: List<Tok>,
+    ) {
         private var pos = 0
 
         private fun peek(): Tok? = tokens.getOrNull(pos)
+
         private fun next(): Tok? = tokens.getOrNull(pos++)
 
         fun parse(): SearchSpec {
@@ -136,7 +213,10 @@ object QueryParser {
             val terms = mutableListOf(parseUnary())
             while (true) {
                 when (peek()) {
-                    is Tok.And -> { next(); terms.add(parseUnary()) }
+                    is Tok.And -> {
+                        next()
+                        terms.add(parseUnary())
+                    }
                     is Tok.Word, is Tok.Field, is Tok.Not, is Tok.LParen -> terms.add(parseUnary())
                     else -> break
                 }
@@ -169,7 +249,10 @@ object QueryParser {
                 else -> throw ParseException("Unexpected token: $t")
             }
 
-        private fun predicate(fieldName: String?, rawValue: String): SearchSpec {
+        private fun predicate(
+            fieldName: String?,
+            rawValue: String,
+        ): SearchSpec {
             val field = resolveField(fieldName)
             val matcher = resolveMatcher(field, rawValue)
             return SearchSpec.Predicate(field, matcher)
@@ -192,9 +275,13 @@ object QueryParser {
             }
         }
 
-        private fun resolveMatcher(field: SearchField, raw: String): Matcher {
-            val isDateField = field == SearchField.CREATED || field == SearchField.MODIFIED ||
-                field == SearchField.ADDED || field == SearchField.TAKEN
+        private fun resolveMatcher(
+            field: SearchField,
+            raw: String,
+        ): Matcher {
+            val isDateField =
+                field == SearchField.CREATED || field == SearchField.MODIFIED ||
+                    field == SearchField.ADDED || field == SearchField.TAKEN
             if (isDateField) {
                 parseDateRange(raw)?.let { return it }
             }
@@ -210,7 +297,10 @@ object QueryParser {
 
         /** Supports A..B, >A, <A, >=A, <=A, and a bare date (that whole day). Returns null if not a date form. */
         private fun parseDateRange(raw: String): Matcher.Range? {
-            fun epoch(date: String, endOfDay: Boolean): Long? = parseEpoch(date, endOfDay)
+            fun epoch(
+                date: String,
+                endOfDay: Boolean,
+            ): Long? = parseEpoch(date, endOfDay)
             return when {
                 raw.contains("..") -> {
                     val (a, b) = raw.split("..", limit = 2)
@@ -233,7 +323,10 @@ object QueryParser {
 }
 
 /** Parse YYYY-MM-DD (or epoch seconds) to epoch millis; [endOfDay] rolls to 23:59:59.999. */
-internal fun parseEpoch(date: String, endOfDay: Boolean): Long? {
+internal fun parseEpoch(
+    date: String,
+    endOfDay: Boolean,
+): Long? {
     val trimmed = date.trim()
     trimmed.toLongOrNull()?.let { return it }
     val parts = trimmed.split('-')

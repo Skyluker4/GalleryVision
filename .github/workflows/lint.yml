@@ -27,10 +27,26 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEFAULT_BRANCH: main
           VALIDATE_ALL_CODEBASE: true
-          # Kotlin via ktlint; C/C++ via clang-format; plus YAML/Markdown/GHA/JSON.
-          # Disable linters that conflict or are irrelevant to this codebase.
+          # Enabled: ktlint, actionlint, yamllint, markdownlint, gitleaks.
+          VALIDATE_KOTLIN: true
+          VALIDATE_GITHUB_ACTIONS: true
+          VALIDATE_YAML: true
+          VALIDATE_MARKDOWN: true
+          # Everything else is irrelevant to this codebase or conflicts.
+          VALIDATE_BASH: false
+          VALIDATE_BASH_EXEC: false
+          VALIDATE_SHELL_SHFMT: false
+          VALIDATE_BIOME_FORMAT: false
+          VALIDATE_BIOME_LINT: false
+          VALIDATE_DOCKERFILE_HADOLINT: false
+          VALIDATE_EDITORCONFIG: false
+          VALIDATE_JSON_PRETTIER: false
+          VALIDATE_JSONC_PRETTIER: false
+          VALIDATE_MARKDOWN_PRETTIER: false
+          VALIDATE_YAML_PRETTIER: false
+          VALIDATE_NATURAL_LANGUAGE: false
           VALIDATE_JAVA: false
           VALIDATE_CHECKOV: false
           VALIDATE_JSCPD: false
-          # Exclude vendored submodules, generated output, and tooling state.
-          FILTER_REGEX_EXCLUDE: '(app/jni/(Paddle-Lite|opencv)/|/build/|\.gradle/|\.omo/|app/src/main/cpp/ocr_clipper\.(cpp|hpp))'
+          # Generated wrapper, build outputs, and tooling state are not linted.
+          FILTER_REGEX_EXCLUDE: '(/build/|\.gradle/|\.omo/|gradlew|\.playwright-mcp/)'

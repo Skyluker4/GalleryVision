@@ -14,16 +14,16 @@ class ScanWorker(
     context: Context,
     params: WorkerParameters,
 ) : CoroutineWorker(context, params) {
-
-    override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
-        try {
-            val entryPoint = EntryPointAccessors.fromApplication(applicationContext, WorkerEntryPoint::class.java)
-            entryPoint.libraryRepository().rescanNow()
-            Result.success()
-        } catch (e: Exception) {
-            if (runAttemptCount < 3) Result.retry() else Result.failure()
+    override suspend fun doWork(): Result =
+        withContext(Dispatchers.IO) {
+            try {
+                val entryPoint = EntryPointAccessors.fromApplication(applicationContext, WorkerEntryPoint::class.java)
+                entryPoint.libraryRepository().rescanNow()
+                Result.success()
+            } catch (e: Exception) {
+                if (runAttemptCount < 3) Result.retry() else Result.failure()
+            }
         }
-    }
 
     companion object {
         const val WORK_NAME = "galleryvision.scan"

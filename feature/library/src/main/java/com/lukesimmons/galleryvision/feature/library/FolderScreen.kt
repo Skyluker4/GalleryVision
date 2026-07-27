@@ -68,10 +68,11 @@ fun FolderScreen(
         ) {
             items(media, key = { it.id }) { item ->
                 Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(1f)
-                        .clickable { onMediaClick(item) },
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(1f)
+                            .clickable { onMediaClick(item) },
                 ) {
                     AsyncImage(
                         model = item.sourceUri,

@@ -24,18 +24,21 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
-
     @Provides
     @Singleton
-    fun provideDatabase(@ApplicationContext context: Context): GalleryVisionDatabase =
-        Room.databaseBuilder(context, GalleryVisionDatabase::class.java, "galleryvision.db")
+    fun provideDatabase(
+        @ApplicationContext context: Context,
+    ): GalleryVisionDatabase =
+        Room
+            .databaseBuilder(context, GalleryVisionDatabase::class.java, "galleryvision.db")
             .fallbackToDestructiveMigration()
             .build()
 
     @Provides
     @Singleton
-    fun provideScanner(@ApplicationContext context: Context): MediaStoreScanner =
-        MediaStoreScanner(context)
+    fun provideScanner(
+        @ApplicationContext context: Context,
+    ): MediaStoreScanner = MediaStoreScanner(context)
 
     @Provides
     @Singleton
@@ -47,15 +50,21 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideOcrEngine(@ApplicationContext context: Context): OcrEngine = OcrEngine(context)
+    fun provideOcrEngine(
+        @ApplicationContext context: Context,
+    ): OcrEngine = OcrEngine(context)
 
     @Provides
     @Singleton
-    fun provideFaceEngine(@ApplicationContext context: Context): FaceEngine = FaceEngine(context)
+    fun provideFaceEngine(
+        @ApplicationContext context: Context,
+    ): FaceEngine = FaceEngine(context)
 
     @Provides
     @Singleton
-    fun provideObjectEngine(@ApplicationContext context: Context): ObjectEngine = ObjectEngine(context)
+    fun provideObjectEngine(
+        @ApplicationContext context: Context,
+    ): ObjectEngine = ObjectEngine(context)
 
     @Provides
     @Singleton
@@ -68,9 +77,13 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideWorkManager(@ApplicationContext context: Context): WorkManager = WorkManager.getInstance(context)
+    fun provideWorkManager(
+        @ApplicationContext context: Context,
+    ): WorkManager = WorkManager.getInstance(context)
 
     @Provides
     @Singleton
-    fun provideSettingsStore(@ApplicationContext context: Context): SettingsStore = SettingsStore(context)
+    fun provideSettingsStore(
+        @ApplicationContext context: Context,
+    ): SettingsStore = SettingsStore(context)
 }

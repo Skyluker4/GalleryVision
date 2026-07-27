@@ -41,11 +41,18 @@ import com.lukesimmons.galleryvision.core.database.entity.TagEntity
 @TypeConverters(Converters::class)
 abstract class GalleryVisionDatabase : RoomDatabase() {
     abstract fun mediaDao(): MediaDao
+
     abstract fun folderDao(): FolderDao
+
     abstract fun detectionDao(): DetectionDao
+
     abstract fun noteDao(): NoteDao
+
     abstract fun tagDao(): TagDao
+
     abstract fun faceClusterDao(): FaceClusterDao
+
     abstract fun denyDao(): DenyDao
+
     abstract fun folderPolicyDao(): FolderPolicyDao
 }

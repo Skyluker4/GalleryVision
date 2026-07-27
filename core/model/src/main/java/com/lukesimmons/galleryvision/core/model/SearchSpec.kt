@@ -5,19 +5,30 @@ package com.lukesimmons.galleryvision.core.model
 /** Matcher for a single field predicate (R8). */
 sealed interface Matcher {
     /** Plain substring/term match. */
-    data class Literal(val value: String) : Matcher
+    data class Literal(
+        val value: String,
+    ) : Matcher
 
     /** Quoted phrase. */
-    data class Phrase(val value: String) : Matcher
+    data class Phrase(
+        val value: String,
+    ) : Matcher
 
     /** Shell-style wildcard: * and ? */
-    data class Wildcard(val pattern: String) : Matcher
+    data class Wildcard(
+        val pattern: String,
+    ) : Matcher
 
     /** Full regular expression. */
-    data class Regex(val pattern: String) : Matcher
+    data class Regex(
+        val pattern: String,
+    ) : Matcher
 
     /** Numeric/date range, bounds in epoch millis (null = unbounded). */
-    data class Range(val from: Long?, val to: Long?) : Matcher
+    data class Range(
+        val from: Long?,
+        val to: Long?,
+    ) : Matcher
 }
 
 /**
@@ -26,16 +37,30 @@ sealed interface Matcher {
  * Precedence (tightest to loosest): NOT > AND > XOR > OR.
  */
 sealed interface SearchSpec {
-    data class And(val terms: List<SearchSpec>) : SearchSpec
+    data class And(
+        val terms: List<SearchSpec>,
+    ) : SearchSpec
 
-    data class Or(val terms: List<SearchSpec>) : SearchSpec
+    data class Or(
+        val terms: List<SearchSpec>,
+    ) : SearchSpec
 
-    data class Xor(val terms: List<SearchSpec>) : SearchSpec
+    data class Xor(
+        val terms: List<SearchSpec>,
+    ) : SearchSpec
 
-    data class Not(val term: SearchSpec) : SearchSpec
+    data class Not(
+        val term: SearchSpec,
+    ) : SearchSpec
 
-    data class Predicate(val field: SearchField, val matcher: Matcher) : SearchSpec
+    data class Predicate(
+        val field: SearchField,
+        val matcher: Matcher,
+    ) : SearchSpec
 }
 
 /** Sort key + direction. */
-data class SortSpec(val field: SearchField, val direction: SortDirection)
+data class SortSpec(
+    val field: SearchField,
+    val direction: SortDirection,
+)

@@ -75,7 +75,9 @@ interface MediaDao {
     @Query("SELECT * FROM media")
     suspend fun getAllList(): List<MediaEntity>
 
-    @Query("SELECT * FROM media WHERE id NOT IN (SELECT DISTINCT mediaId FROM detection) ORDER BY COALESCE(dateTaken, dateAdded, dateModified, 0) DESC LIMIT :limit")
+    @Query(
+        "SELECT * FROM media WHERE id NOT IN (SELECT DISTINCT mediaId FROM detection) ORDER BY COALESCE(dateTaken, dateAdded, dateModified, 0) DESC LIMIT :limit",
+    )
     suspend fun mediaWithoutDetections(limit: Int): List<MediaEntity>
 
     @RawQuery(observedEntities = [MediaEntity::class])
@@ -132,7 +134,10 @@ interface DetectionDao {
     suspend fun facesWithEmbeddings(): List<DetectionEntity>
 
     @Query("UPDATE detection SET clusterId = :clusterId WHERE id = :id")
-    suspend fun assignCluster(id: Long, clusterId: Long)
+    suspend fun assignCluster(
+        id: Long,
+        clusterId: Long,
+    )
 
     @Query("SELECT * FROM detection WHERE clusterId = :clusterId ORDER BY confidence DESC LIMIT 1")
     suspend fun representativeForCluster(clusterId: Long): DetectionEntity?
@@ -147,7 +152,10 @@ interface NoteDao {
     suspend fun upsert(note: NoteEntity): Long
 
     @Query("SELECT * FROM note WHERE targetKind = :kind AND targetId = :targetId")
-    fun forTarget(kind: com.lukesimmons.galleryvision.core.model.NoteTargetKind, targetId: Long): Flow<List<NoteEntity>>
+    fun forTarget(
+        kind: com.lukesimmons.galleryvision.core.model.NoteTargetKind,
+        targetId: Long,
+    ): Flow<List<NoteEntity>>
 
     @Query("DELETE FROM note WHERE id = :id")
     suspend fun delete(id: Long)
@@ -168,7 +176,10 @@ interface TagDao {
     suspend fun addToMedia(ref: MediaTagCrossRef)
 
     @Query("DELETE FROM media_tag WHERE mediaId = :mediaId AND tagId = :tagId")
-    suspend fun removeFromMedia(mediaId: Long, tagId: Long)
+    suspend fun removeFromMedia(
+        mediaId: Long,
+        tagId: Long,
+    )
 
     @Query("SELECT * FROM media_tag WHERE mediaId = :mediaId")
     fun forMedia(mediaId: Long): Flow<List<MediaTagCrossRef>>
@@ -186,10 +197,16 @@ interface FaceClusterDao {
     fun all(): Flow<List<FaceClusterEntity>>
 
     @Query("UPDATE face_cluster SET name = :name WHERE id = :id")
-    suspend fun rename(id: Long, name: String)
+    suspend fun rename(
+        id: Long,
+        name: String,
+    )
 
     @Query("UPDATE face_cluster SET contactLookupKey = :lookupKey WHERE id = :id")
-    suspend fun linkContact(id: Long, lookupKey: String?)
+    suspend fun linkContact(
+        id: Long,
+        lookupKey: String?,
+    )
 
     @Query("DELETE FROM face_cluster")
     suspend fun clearAll()
@@ -201,7 +218,10 @@ interface DenyDao {
     suspend fun add(entry: DenyEntity)
 
     @Query("DELETE FROM deny WHERE kind = :kind AND value = :value")
-    suspend fun remove(kind: DenyKind, value: String)
+    suspend fun remove(
+        kind: DenyKind,
+        value: String,
+    )
 
     @Query("SELECT * FROM deny")
     fun all(): Flow<List<DenyEntity>>

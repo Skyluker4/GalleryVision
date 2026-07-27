@@ -171,7 +171,10 @@ private fun SearchBar(
 }
 
 @Composable
-private fun SortMenu(sort: SortSpec?, onSort: (SortSpec) -> Unit) {
+private fun SortMenu(
+    sort: SortSpec?,
+    onSort: (SortSpec) -> Unit,
+) {
     var open by remember { mutableStateOf(false) }
     Box {
         TextButton(onClick = { open = true }) {
@@ -191,20 +194,24 @@ private fun SortMenu(sort: SortSpec?, onSort: (SortSpec) -> Unit) {
     }
 }
 
-private fun sortOptions(): List<Pair<String, SortSpec>> = listOf(
-    "Newest" to SortSpec(SearchField.TAKEN, SortDirection.DESC),
-    "Oldest" to SortSpec(SearchField.TAKEN, SortDirection.ASC),
-    "Name A-Z" to SortSpec(SearchField.PATH, SortDirection.ASC),
-    "Name Z-A" to SortSpec(SearchField.PATH, SortDirection.DESC),
-    "Added (new)" to SortSpec(SearchField.ADDED, SortDirection.DESC),
-    "Modified (new)" to SortSpec(SearchField.MODIFIED, SortDirection.DESC),
-)
+private fun sortOptions(): List<Pair<String, SortSpec>> =
+    listOf(
+        "Newest" to SortSpec(SearchField.TAKEN, SortDirection.DESC),
+        "Oldest" to SortSpec(SearchField.TAKEN, SortDirection.ASC),
+        "Name A-Z" to SortSpec(SearchField.PATH, SortDirection.ASC),
+        "Name Z-A" to SortSpec(SearchField.PATH, SortDirection.DESC),
+        "Added (new)" to SortSpec(SearchField.ADDED, SortDirection.DESC),
+        "Modified (new)" to SortSpec(SearchField.MODIFIED, SortDirection.DESC),
+    )
 
 private fun sortLabel(sort: SortSpec?): String =
     if (sort == null) "Sort" else sortOptions().firstOrNull { it.second == sort }?.first ?: "Sort"
 
 @Composable
-private fun MediaGrid(media: List<MediaEntity>, onMediaClick: (MediaEntity) -> Unit) {
+private fun MediaGrid(
+    media: List<MediaEntity>,
+    onMediaClick: (MediaEntity) -> Unit,
+) {
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 120.dp),
         modifier = Modifier.fillMaxSize(),
@@ -219,12 +226,16 @@ private fun MediaGrid(media: List<MediaEntity>, onMediaClick: (MediaEntity) -> U
 }
 
 @Composable
-private fun MediaCard(media: MediaEntity, onMediaClick: (MediaEntity) -> Unit) {
+private fun MediaCard(
+    media: MediaEntity,
+    onMediaClick: (MediaEntity) -> Unit,
+) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .aspectRatio(1f)
-            .clickable { onMediaClick(media) },
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .aspectRatio(1f)
+                .clickable { onMediaClick(media) },
     ) {
         AsyncImage(
             model = media.sourceUri,

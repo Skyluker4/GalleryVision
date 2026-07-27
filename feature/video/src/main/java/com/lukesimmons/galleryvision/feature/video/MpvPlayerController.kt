@@ -6,11 +6,11 @@ import android.content.Context
 import android.util.Log
 import android.view.Surface
 import dev.jdtech.mpv.MPVLib
-import kotlin.math.ln
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlin.math.ln
 
 data class PlayerState(
     val ready: Boolean = false,
@@ -37,29 +37,44 @@ class MpvPlayerController(
     private var pendingSource: String? = null
     private var attached = false
 
-    private val observer = object : MPVLib.EventObserver {
-        override fun eventProperty(property: String) = Unit
-        override fun eventProperty(property: String, value: Long) = Unit
-        override fun eventProperty(property: String, value: String) = Unit
+    private val observer =
+        object : MPVLib.EventObserver {
+            override fun eventProperty(property: String) = Unit
 
-        override fun eventProperty(property: String, value: Boolean) {
-            if (property == "pause") _state.update { it.copy(paused = value) }
-        }
+            override fun eventProperty(
+                property: String,
+                value: Long,
+            ) = Unit
 
-        override fun eventProperty(property: String, value: Double) {
-            when (property) {
-                "time-pos" -> _state.update { it.copy(positionMs = (value * 1000).toLong()) }
-                "duration" -> _state.update { it.copy(durationMs = (value * 1000).toLong()) }
-                "video-zoom" -> _state.update { it.copy(zoom = value) }
+            override fun eventProperty(
+                property: String,
+                value: String,
+            ) = Unit
+
+            override fun eventProperty(
+                property: String,
+                value: Boolean,
+            ) {
+                if (property == "pause") _state.update { it.copy(paused = value) }
+            }
+
+            override fun eventProperty(
+                property: String,
+                value: Double,
+            ) {
+                when (property) {
+                    "time-pos" -> _state.update { it.copy(positionMs = (value * 1000).toLong()) }
+                    "duration" -> _state.update { it.copy(durationMs = (value * 1000).toLong()) }
+                    "video-zoom" -> _state.update { it.copy(zoom = value) }
+                }
+            }
+
+            override fun event(eventId: Int) {
+                if (eventId == MPVLib.MpvEvent.MPV_EVENT_FILE_LOADED) {
+                    _state.update { it.copy(ready = true) }
+                }
             }
         }
-
-        override fun event(eventId: Int) {
-            if (eventId == MPVLib.MpvEvent.MPV_EVENT_FILE_LOADED) {
-                _state.update { it.copy(ready = true) }
-            }
-        }
-    }
 
     init {
         try {
@@ -109,7 +124,10 @@ class MpvPlayerController(
         attached = false
     }
 
-    fun setSurfaceSize(width: Int, height: Int) {
+    fun setSurfaceSize(
+        width: Int,
+        height: Int,
+    ) {
         mpv?.setPropertyString("android-surface-size", "${width}x$height")
     }
 

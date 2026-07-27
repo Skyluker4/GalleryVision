@@ -18,8 +18,9 @@ import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
 @HiltAndroidApp
-class GalleryVisionApp : Application(), Configuration.Provider {
-
+class GalleryVisionApp :
+    Application(),
+    Configuration.Provider {
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
 
@@ -34,11 +35,12 @@ class GalleryVisionApp : Application(), Configuration.Provider {
 
     private fun registerMediaObserver() {
         val workManager = WorkManager.getInstance(this)
-        val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
-            override fun onChange(selfChange: Boolean) {
-                enqueueScanThenDetect(workManager)
+        val observer =
+            object : ContentObserver(Handler(Looper.getMainLooper())) {
+                override fun onChange(selfChange: Boolean) {
+                    enqueueScanThenDetect(workManager)
+                }
             }
-        }
         contentResolver.registerContentObserver(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, true, observer)
         contentResolver.registerContentObserver(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, true, observer)
     }

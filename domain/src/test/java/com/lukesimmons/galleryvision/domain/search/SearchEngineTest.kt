@@ -13,7 +13,10 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class QueryParserTest {
-    private fun pred(field: SearchField, matcher: Matcher) = SearchSpec.Predicate(field, matcher)
+    private fun pred(
+        field: SearchField,
+        matcher: Matcher,
+    ) = SearchSpec.Predicate(field, matcher)
 
     @Test
     fun bareTermDefaultsToTextLiteral() {
@@ -28,10 +31,13 @@ class QueryParserTest {
 
     @Test
     fun implicitAnd() {
-        val expected = SearchSpec.And(listOf(
-            pred(SearchField.TEXT, Matcher.Literal("a")),
-            pred(SearchField.TEXT, Matcher.Literal("b")),
-        ))
+        val expected =
+            SearchSpec.And(
+                listOf(
+                    pred(SearchField.TEXT, Matcher.Literal("a")),
+                    pred(SearchField.TEXT, Matcher.Literal("b")),
+                ),
+            )
         assertEquals(expected, QueryParser.parse("a b"))
     }
 
@@ -131,10 +137,11 @@ class QueryCompilerTest {
 
     @Test
     fun sortCompilation() {
-        val q = QueryCompiler.compile(
-            SearchSpec.And(emptyList()),
-            SortSpec(SearchField.PATH, SortDirection.ASC),
-        )
+        val q =
+            QueryCompiler.compile(
+                SearchSpec.And(emptyList()),
+                SortSpec(SearchField.PATH, SortDirection.ASC),
+            )
         assertEquals("ORDER BY media.path ASC, media.id ASC", q.orderBy)
     }
 }
@@ -149,7 +156,9 @@ class SearchEvaluatorTest {
 
     @Test
     fun literalMatching() {
-        assertTrue(SearchEvaluator.matches(SearchSpec.Predicate(SearchField.TEXT, Matcher.Literal("cat")), fv(texts = listOf("a cat here"))))
+        assertTrue(
+            SearchEvaluator.matches(SearchSpec.Predicate(SearchField.TEXT, Matcher.Literal("cat")), fv(texts = listOf("a cat here"))),
+        )
         assertFalse(SearchEvaluator.matches(SearchSpec.Predicate(SearchField.TEXT, Matcher.Literal("dog")), fv(texts = listOf("a cat"))))
     }
 
@@ -185,7 +194,11 @@ class SearchEvaluatorTest {
 
     @Test
     fun notMatching() {
-        assertTrue(SearchEvaluator.matches(SearchSpec.Not(SearchSpec.Predicate(SearchField.TAG, Matcher.Literal("x"))), fv(tags = listOf("y"))))
-        assertFalse(SearchEvaluator.matches(SearchSpec.Not(SearchSpec.Predicate(SearchField.TAG, Matcher.Literal("x"))), fv(tags = listOf("x"))))
+        assertTrue(
+            SearchEvaluator.matches(SearchSpec.Not(SearchSpec.Predicate(SearchField.TAG, Matcher.Literal("x"))), fv(tags = listOf("y"))),
+        )
+        assertFalse(
+            SearchEvaluator.matches(SearchSpec.Not(SearchSpec.Predicate(SearchField.TAG, Matcher.Literal("x"))), fv(tags = listOf("x"))),
+        )
     }
 }

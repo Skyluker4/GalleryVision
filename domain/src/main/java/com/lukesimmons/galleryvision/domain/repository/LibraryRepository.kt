@@ -33,25 +33,40 @@ interface LibraryRepository {
 
     suspend fun saveDetections(detections: List<DetectionEntity>)
 
-    suspend fun search(query: String, sort: SortSpec?): List<MediaEntity>
+    suspend fun search(
+        query: String,
+        sort: SortSpec?,
+    ): List<MediaEntity>
 
     fun denyList(kind: DenyKind): Flow<List<DenyEntity>>
 
     suspend fun addDeny(entry: DenyEntity)
 
-    suspend fun removeDeny(kind: DenyKind, value: String)
+    suspend fun removeDeny(
+        kind: DenyKind,
+        value: String,
+    )
 
     suspend fun updateDetection(detection: DetectionEntity)
 
     fun clustersWithRepresentative(): Flow<List<FaceClusterInfo>>
 
-    suspend fun renameCluster(id: Long, name: String)
+    suspend fun renameCluster(
+        id: Long,
+        name: String,
+    )
 
-    suspend fun linkClusterToContact(id: Long, lookupKey: String?)
+    suspend fun linkClusterToContact(
+        id: Long,
+        lookupKey: String?,
+    )
 
     suspend fun reclusterFaces(): Int
 
-    fun notesFor(kind: NoteTargetKind, targetId: Long): Flow<List<NoteEntity>>
+    fun notesFor(
+        kind: NoteTargetKind,
+        targetId: Long,
+    ): Flow<List<NoteEntity>>
 
     suspend fun addNote(note: NoteEntity): Long
 
@@ -66,5 +81,8 @@ interface LibraryRepository {
     fun folderPolicies(): Flow<List<FolderPolicyEntity>>
 
     /** Set a folder's visibility policy; null restores the default (visible in deny mode). */
-    suspend fun setFolderPolicy(folderId: Long, mode: FolderPolicyMode?)
+    suspend fun setFolderPolicy(
+        folderId: Long,
+        mode: FolderPolicyMode?,
+    )
 }

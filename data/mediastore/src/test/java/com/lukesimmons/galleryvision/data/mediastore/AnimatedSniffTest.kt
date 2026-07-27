@@ -8,7 +8,6 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class AnimatedSniffTest {
-
     private fun png(vararg chunks: String): ByteArray {
         val sig = byteArrayOf(-119, 80, 78, 71, 13, 10, 26, 10)
         return sig + chunks.joinToString("").toByteArray(Charsets.US_ASCII)

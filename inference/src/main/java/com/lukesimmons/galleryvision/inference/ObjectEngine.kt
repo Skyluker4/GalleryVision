@@ -14,8 +14,9 @@ import java.nio.FloatBuffer
  * no NNAPI). Uses the postprocessed export, so NMS is baked into the model — the engine only
  * filters by score. Boxes are normalized to [0,1] of the source image.
  */
-class ObjectEngine(context: Context) {
-
+class ObjectEngine(
+    context: Context,
+) {
     data class Detected(
         val label: String,
         val left: Float,
@@ -79,11 +80,12 @@ class ObjectEngine(context: Context) {
             for (y in 0 until h) {
                 for (x in 0 until w) {
                     val p = px[y * w + x]
-                    val v = when (c) {
-                        0 -> (p shr 16) and 0xff
-                        1 -> (p shr 8) and 0xff
-                        else -> p and 0xff
-                    }
+                    val v =
+                        when (c) {
+                            0 -> (p shr 16) and 0xff
+                            1 -> (p shr 8) and 0xff
+                            else -> p and 0xff
+                        }
                     fb.put((v - mean) / std)
                 }
             }
@@ -92,7 +94,10 @@ class ObjectEngine(context: Context) {
         return OnnxTensor.createTensor(env, fb, longArrayOf(1, 3, h.toLong(), w.toLong()))
     }
 
-    private fun out2d(result: OrtSession.Result, name: String): Array<FloatArray> {
+    private fun out2d(
+        result: OrtSession.Result,
+        name: String,
+    ): Array<FloatArray> {
         for (entry in result) {
             if (entry.key == name) {
                 @Suppress("UNCHECKED_CAST")
@@ -102,7 +107,11 @@ class ObjectEngine(context: Context) {
         throw IllegalArgumentException("PicoDet output '$name' missing")
     }
 
-    private fun decode(dets: Array<FloatArray>, origW: Int, origH: Int): List<Detected> {
+    private fun decode(
+        dets: Array<FloatArray>,
+        origW: Int,
+        origH: Int,
+    ): List<Detected> {
         val out = ArrayList<Detected>()
         for (row in dets) {
             if (row.size < 6) continue
@@ -126,18 +135,88 @@ class ObjectEngine(context: Context) {
         private const val SCORE_THRESH = 0.5f
         private val MEAN = floatArrayOf(103.53f, 116.28f, 123.675f)
         private val STD = floatArrayOf(57.375f, 57.12f, 58.395f)
-        private val COCO80 = arrayOf(
-            "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat",
-            "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat",
-            "dog", "horse", "sheep", "cow", "elephant", "bear", "zebra", "giraffe", "backpack",
-            "umbrella", "handbag", "tie", "suitcase", "frisbee", "skis", "snowboard", "sports ball",
-            "kite", "baseball bat", "baseball glove", "skateboard", "surfboard", "tennis racket",
-            "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana", "apple",
-            "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", "chair",
-            "couch", "potted plant", "bed", "dining table", "toilet", "tv", "laptop", "mouse",
-            "remote", "keyboard", "cell phone", "microwave", "oven", "toaster", "sink",
-            "refrigerator", "book", "clock", "vase", "scissors", "teddy bear", "hair drier",
-            "toothbrush",
-        )
+        private val COCO80 =
+            arrayOf(
+                "person",
+                "bicycle",
+                "car",
+                "motorcycle",
+                "airplane",
+                "bus",
+                "train",
+                "truck",
+                "boat",
+                "traffic light",
+                "fire hydrant",
+                "stop sign",
+                "parking meter",
+                "bench",
+                "bird",
+                "cat",
+                "dog",
+                "horse",
+                "sheep",
+                "cow",
+                "elephant",
+                "bear",
+                "zebra",
+                "giraffe",
+                "backpack",
+                "umbrella",
+                "handbag",
+                "tie",
+                "suitcase",
+                "frisbee",
+                "skis",
+                "snowboard",
+                "sports ball",
+                "kite",
+                "baseball bat",
+                "baseball glove",
+                "skateboard",
+                "surfboard",
+                "tennis racket",
+                "bottle",
+                "wine glass",
+                "cup",
+                "fork",
+                "knife",
+                "spoon",
+                "bowl",
+                "banana",
+                "apple",
+                "sandwich",
+                "orange",
+                "broccoli",
+                "carrot",
+                "hot dog",
+                "pizza",
+                "donut",
+                "cake",
+                "chair",
+                "couch",
+                "potted plant",
+                "bed",
+                "dining table",
+                "toilet",
+                "tv",
+                "laptop",
+                "mouse",
+                "remote",
+                "keyboard",
+                "cell phone",
+                "microwave",
+                "oven",
+                "toaster",
+                "sink",
+                "refrigerator",
+                "book",
+                "clock",
+                "vase",
+                "scissors",
+                "teddy bear",
+                "hair drier",
+                "toothbrush",
+            )
     }
 }

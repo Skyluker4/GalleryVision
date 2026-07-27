@@ -7,7 +7,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class FaceClustererTest {
-
     @Test
     fun cosineIdenticalIsOne() {
         assertEquals(1f, FaceClusterer.cosine(floatArrayOf(1f, 2f, 3f), floatArrayOf(1f, 2f, 3f)), 0.001f)

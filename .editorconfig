@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (C) 2026 Luke Simmons <luke5083@live.com>
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{kt,kts}]
+# Compose uses PascalCase @Composable factory functions by convention.
+ktlint_function_naming_ignore_when_annotated_with = Composable
+
+[*.md]
+trim_trailing_whitespace = false

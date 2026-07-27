@@ -6,7 +6,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class MpvConfParserTest {
-
     @Test
     fun parsesKeyValueLines() {
         val conf = "hwdec=auto\nvideo-zoom=1.5"

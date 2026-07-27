@@ -17,7 +17,6 @@ import kotlin.math.sqrt
  */
 @RunWith(AndroidJUnit4::class)
 class FaceEngineTest {
-
     @Test
     fun detectsFaceAndProducesEmbedding() {
         val ctx = InstrumentationRegistry.getInstrumentation().context
@@ -34,8 +33,9 @@ class FaceEngineTest {
 
             val top = faces.maxBy { it.score }
             assertTrue("face score too low: ${top.score}", top.score > 0.5f)
-            val validBox = top.right > top.left && top.bottom > top.top &&
-                top.left in 0f..1f && top.top in 0f..1f && top.right in 0f..1f && top.bottom in 0f..1f
+            val validBox =
+                top.right > top.left && top.bottom > top.top &&
+                    top.left in 0f..1f && top.top in 0f..1f && top.right in 0f..1f && top.bottom in 0f..1f
             assertTrue("face box not a valid normalized rect", validBox)
 
             val emb = engine.embed(bitmap, top)
@@ -49,9 +49,18 @@ class FaceEngineTest {
         }
     }
 
-    private fun cosine(a: FloatArray, b: FloatArray): Float {
-        var dot = 0f; var na = 0f; var nb = 0f
-        for (i in a.indices) { dot += a[i] * b[i]; na += a[i] * a[i]; nb += b[i] * b[i] }
+    private fun cosine(
+        a: FloatArray,
+        b: FloatArray,
+    ): Float {
+        var dot = 0f
+        var na = 0f
+        var nb = 0f
+        for (i in a.indices) {
+            dot += a[i] * b[i]
+            na += a[i] * a[i]
+            nb += b[i] * b[i]
+        }
         return if (na == 0f || nb == 0f) 0f else dot / (sqrt(na) * sqrt(nb))
     }
 

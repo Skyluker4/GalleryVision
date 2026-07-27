@@ -23,70 +23,71 @@ import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
-class LibraryViewModel @Inject constructor(
-    private val repository: LibraryRepository,
-    settings: SettingsStore,
-) : ViewModel() {
+class LibraryViewModel
+    @Inject
+    constructor(
+        private val repository: LibraryRepository,
+        settings: SettingsStore,
+    ) : ViewModel() {
+        // A new pager is needed when the mode flips; folder_policy row changes
+        // invalidate the active PagingSource via Room's InvalidationTracker.
+        val media: Flow<PagingData<MediaEntity>> =
+            settings.allowListOnly
+                .flatMapLatest { allow -> repository.mediaPager(allow).flow }
+                .cachedIn(viewModelScope)
 
-    // A new pager is needed when the mode flips; folder_policy row changes
-    // invalidate the active PagingSource via Room's InvalidationTracker.
-    val media: Flow<PagingData<MediaEntity>> =
-        settings.allowListOnly
-            .flatMapLatest { allow -> repository.mediaPager(allow).flow }
-            .cachedIn(viewModelScope)
+        val mediaCount: StateFlow<Int> =
+            settings.allowListOnly
+                .flatMapLatest { allow -> repository.observeMediaCount(allow) }
+                .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
 
-    val mediaCount: StateFlow<Int> =
-        settings.allowListOnly
-            .flatMapLatest { allow -> repository.observeMediaCount(allow) }
-            .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
-
-    fun rescan() {
-        viewModelScope.launch { repository.rescanNow() }
-    }
-
-    private val _query = MutableStateFlow("")
-    val query: StateFlow<String> = _query
-
-    /** Non-null while a search is active; holds the matching media (empty list = no matches). */
-    private val _searchResults = MutableStateFlow<List<MediaEntity>?>(null)
-    val searchResults: StateFlow<List<MediaEntity>?> = _searchResults
-
-    private val _searching = MutableStateFlow(false)
-    val searching: StateFlow<Boolean> = _searching
-
-    private val _sort = MutableStateFlow<SortSpec?>(null)
-    val sort: StateFlow<SortSpec?> = _sort
-
-    fun setQuery(value: String) {
-        _query.value = value
-        if (value.isBlank()) clearSearch()
-    }
-
-    fun setSort(value: SortSpec?) {
-        _sort.value = value
-        if (_query.value.isNotBlank()) search()
-    }
-
-    fun search() {
-        val q = _query.value
-        if (q.isBlank()) {
-            clearSearch()
-            return
+        fun rescan() {
+            viewModelScope.launch { repository.rescanNow() }
         }
-        viewModelScope.launch {
-            _searching.value = true
-            try {
-                _searchResults.value = repository.search(q, _sort.value)
-            } catch (e: Exception) {
-                _searchResults.value = emptyList()
-            } finally {
-                _searching.value = false
+
+        private val _query = MutableStateFlow("")
+        val query: StateFlow<String> = _query
+
+        /** Non-null while a search is active; holds the matching media (empty list = no matches). */
+        private val _searchResults = MutableStateFlow<List<MediaEntity>?>(null)
+        val searchResults: StateFlow<List<MediaEntity>?> = _searchResults
+
+        private val _searching = MutableStateFlow(false)
+        val searching: StateFlow<Boolean> = _searching
+
+        private val _sort = MutableStateFlow<SortSpec?>(null)
+        val sort: StateFlow<SortSpec?> = _sort
+
+        fun setQuery(value: String) {
+            _query.value = value
+            if (value.isBlank()) clearSearch()
+        }
+
+        fun setSort(value: SortSpec?) {
+            _sort.value = value
+            if (_query.value.isNotBlank()) search()
+        }
+
+        fun search() {
+            val q = _query.value
+            if (q.isBlank()) {
+                clearSearch()
+                return
+            }
+            viewModelScope.launch {
+                _searching.value = true
+                try {
+                    _searchResults.value = repository.search(q, _sort.value)
+                } catch (e: Exception) {
+                    _searchResults.value = emptyList()
+                } finally {
+                    _searching.value = false
+                }
             }
         }
-    }
 
-    fun clearSearch() {
-        _query.value = ""
-        _searchResults.value = null
+        fun clearSearch() {
+            _query.value = ""
+            _searchResults.value = null
+        }
     }
-}

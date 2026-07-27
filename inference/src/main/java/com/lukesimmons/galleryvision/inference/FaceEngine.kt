@@ -22,8 +22,9 @@ import kotlin.math.sqrt
  * Detection boxes and landmarks are normalized to [0,1] of the source image. Both models are
  * permissively licensed (MIT), so they are shippable in this AGPL app.
  */
-class FaceEngine(context: Context) {
-
+class FaceEngine(
+    context: Context,
+) {
     data class Face(
         val left: Float,
         val top: Float,
@@ -33,6 +34,7 @@ class FaceEngine(context: Context) {
         val score: Float,
     ) {
         override fun equals(other: Any?): Boolean = this === other || (other is Face && other.score == score && other.left == left)
+
         override fun hashCode(): Int = score.hashCode()
     }
 
@@ -53,9 +55,10 @@ class FaceEngine(context: Context) {
             det = newSession("$MODEL_DIR/yunet.onnx")
             // YuNet exports some weights as graph inputs, so the image input is not necessarily
             // first. Pick the 4D (NCHW) input and read its shape.
-            val imageEntry = det!!.inputInfo.entries.firstOrNull { (_, node) ->
-                (node.info as? TensorInfo)?.shape?.size == 4
-            }
+            val imageEntry =
+                det!!.inputInfo.entries.firstOrNull { (_, node) ->
+                    (node.info as? TensorInfo)?.shape?.size == 4
+                }
             detInputName = imageEntry?.key ?: det!!.inputNames.first()
             val shape = (imageEntry?.value?.info as? TensorInfo)?.shape
             if (shape != null && shape.size >= 4) {
@@ -74,8 +77,10 @@ class FaceEngine(context: Context) {
     fun close() {
         if (closed) return
         closed = true
-        det?.close(); rec?.close()
-        det = null; rec = null
+        det?.close()
+        rec?.close()
+        det = null
+        rec = null
     }
 
     // ---------------- Detection (YuNet) ----------------
@@ -141,7 +146,10 @@ class FaceEngine(context: Context) {
         }
     }
 
-    private fun out2d(result: OrtSession.Result, name: String): Array<FloatArray> {
+    private fun out2d(
+        result: OrtSession.Result,
+        name: String,
+    ): Array<FloatArray> {
         for (entry in result) {
             if (entry.key == name) {
                 @Suppress("UNCHECKED_CAST")
@@ -165,20 +173,32 @@ class FaceEngine(context: Context) {
         return keep
     }
 
-    private fun iou(a: FloatArray, b: FloatArray): Float {
-        val x1 = max(a[0], b[0]); val y1 = max(a[1], b[1])
-        val x2 = min(a[2], b[2]); val y2 = min(a[3], b[3])
+    private fun iou(
+        a: FloatArray,
+        b: FloatArray,
+    ): Float {
+        val x1 = max(a[0], b[0])
+        val y1 = max(a[1], b[1])
+        val x2 = min(a[2], b[2])
+        val y2 = min(a[3], b[3])
         val inter = max(0f, x2 - x1) * max(0f, y2 - y1)
         val areaA = (a[2] - a[0]) * (a[3] - a[1])
         val areaB = (b[2] - b[0]) * (b[3] - b[1])
         return if (areaA + areaB - inter <= 0f) 0f else inter / (areaA + areaB - inter)
     }
 
-    private data class Cand(val box: FloatArray, val lm: FloatArray, val score: Float)
+    private data class Cand(
+        val box: FloatArray,
+        val lm: FloatArray,
+        val score: Float,
+    )
 
     // ---------------- Recognition (SFace) ----------------
 
-    fun embed(src: Bitmap, face: Face): FloatArray {
+    fun embed(
+        src: Bitmap,
+        face: Face,
+    ): FloatArray {
         ensureLoaded()
         val crop = cropFace(src, face) ?: return FloatArray(EMB_DIM)
         val resized = Bitmap.createScaledBitmap(crop, REC_SIZE, REC_SIZE, true)
@@ -194,7 +214,10 @@ class FaceEngine(context: Context) {
         }
     }
 
-    private fun cropFace(src: Bitmap, face: Face): Bitmap? {
+    private fun cropFace(
+        src: Bitmap,
+        face: Face,
+    ): Bitmap? {
         val l = (face.left * src.width).toInt().coerceIn(0, src.width - 1)
         val t = (face.top * src.height).toInt().coerceIn(0, src.height - 1)
         val r = (face.right * src.width).toInt().coerceIn(l + 1, src.width)
@@ -212,10 +235,17 @@ class FaceEngine(context: Context) {
 
     // ---------------- Shared ----------------
 
-    private fun resizeTo(src: Bitmap, w: Int, h: Int): Triple<Bitmap, Float, Float> =
-        Triple(Bitmap.createScaledBitmap(src, w, h, true), src.width.toFloat() / w, src.height.toFloat() / h)
+    private fun resizeTo(
+        src: Bitmap,
+        w: Int,
+        h: Int,
+    ): Triple<Bitmap, Float, Float> = Triple(Bitmap.createScaledBitmap(src, w, h, true), src.width.toFloat() / w, src.height.toFloat() / h)
 
-    private fun toTensor(bitmap: Bitmap, scale: Float, bgr: Boolean): OnnxTensor {
+    private fun toTensor(
+        bitmap: Bitmap,
+        scale: Float,
+        bgr: Boolean,
+    ): OnnxTensor {
         val w = bitmap.width
         val h = bitmap.height
         val px = IntArray(w * h)
@@ -225,11 +255,12 @@ class FaceEngine(context: Context) {
             for (y in 0 until h) {
                 for (x in 0 until w) {
                     val p = px[y * w + x]
-                    val v = when (c) {
-                        0 -> if (bgr) p and 0xff else (p shr 16) and 0xff
-                        1 -> (p shr 8) and 0xff
-                        else -> if (bgr) (p shr 16) and 0xff else p and 0xff
-                    }
+                    val v =
+                        when (c) {
+                            0 -> if (bgr) p and 0xff else (p shr 16) and 0xff
+                            1 -> (p shr 8) and 0xff
+                            else -> if (bgr) (p shr 16) and 0xff else p and 0xff
+                        }
                     fb.put(v * scale)
                 }
             }

@@ -102,7 +102,10 @@ fun SettingsScreen(
 }
 
 @Composable
-private fun MpvConfigSection(saved: String, onSave: (String) -> Unit) {
+private fun MpvConfigSection(
+    saved: String,
+    onSave: (String) -> Unit,
+) {
     var draft by remember { mutableStateOf<String?>(null) }
     Column {
         Text("Video player (mpv.conf)", style = MaterialTheme.typography.titleMedium)
@@ -124,7 +127,10 @@ private fun MpvConfigSection(saved: String, onSave: (String) -> Unit) {
         ) {
             if (draft != null && draft != saved) {
                 TextButton(onClick = { draft = null }) { Text("Discard") }
-                Button(onClick = { onSave(draft ?: ""); draft = null }) { Text("Save") }
+                Button(onClick = {
+                    onSave(draft ?: "")
+                    draft = null
+                }) { Text("Save") }
             } else {
                 Text(if (saved.isBlank()) "No overrides" else "Saved", style = MaterialTheme.typography.labelSmall)
             }
@@ -156,7 +162,10 @@ private fun WordListEditor(
                 singleLine = true,
             )
             TextButton(
-                onClick = { onAdd(input); input = "" },
+                onClick = {
+                    onAdd(input)
+                    input = ""
+                },
                 enabled = input.isNotBlank(),
             ) { Text("Add") }
         }

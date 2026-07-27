@@ -5,6 +5,7 @@ package com.lukesimmons.galleryvision.feature.viewer
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -14,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -82,26 +82,28 @@ fun ViewerScreen(
             )
 
             Canvas(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .pointerInput(regions) {
-                        detectTapGestures { tap ->
-                            viewModel.selectAt(
-                                (tap.x - offX) / (imgW * scale),
-                                (tap.y - offY) / (imgH * scale),
-                            )
-                        }
-                    },
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .pointerInput(regions) {
+                            detectTapGestures { tap ->
+                                viewModel.selectAt(
+                                    (tap.x - offX) / (imgW * scale),
+                                    (tap.y - offY) / (imgH * scale),
+                                )
+                            }
+                        },
             ) {
                 regions.forEach { region ->
                     val q = region.quad()
-                    val path = Path().apply {
-                        moveTo(offX + q[0] * imgW * scale, offY + q[1] * imgH * scale)
-                        for (k in 1 until 4) {
-                            lineTo(offX + q[k * 2] * imgW * scale, offY + q[k * 2 + 1] * imgH * scale)
+                    val path =
+                        Path().apply {
+                            moveTo(offX + q[0] * imgW * scale, offY + q[1] * imgH * scale)
+                            for (k in 1 until 4) {
+                                lineTo(offX + q[k * 2] * imgW * scale, offY + q[k * 2 + 1] * imgH * scale)
+                            }
+                            close()
                         }
-                        close()
-                    }
                     val isSel = region.id == selected?.id
                     drawPath(path, color = if (isSel) Color(0x5500FF88) else kindFill(region.kind))
                     drawPath(
@@ -118,10 +120,11 @@ fun ViewerScreen(
         }
 
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-                .padding(8.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -134,7 +137,10 @@ fun ViewerScreen(
                     maxLines = 2,
                 )
                 TextButton(onClick = { clipboard.setText(AnnotatedString(sel.valueText ?: "")) }) { Text("Copy") }
-                TextButton(onClick = { editText = sel.valueText ?: ""; showEdit = true }) { Text("Edit") }
+                TextButton(onClick = {
+                    editText = sel.valueText ?: ""
+                    showEdit = true
+                }) { Text("Edit") }
                 TextButton(onClick = { viewModel.addWordToDictionary(sel.valueText ?: "") }) { Text("+ Dict") }
                 TextButton(onClick = { viewModel.addWordToDenyList(sel.valueText ?: "") }) { Text("Deny") }
                 TextButton(onClick = { viewModel.select(null) }) { Text("X") }
@@ -177,7 +183,10 @@ fun ViewerScreen(
                 )
             },
             confirmButton = {
-                TextButton(onClick = { viewModel.editSelected(editText); showEdit = false }) {
+                TextButton(onClick = {
+                    viewModel.editSelected(editText)
+                    showEdit = false
+                }) {
                     Text("Save")
                 }
             },
@@ -188,14 +197,16 @@ fun ViewerScreen(
     }
 }
 
-private fun kindFill(kind: DetectionKind): Color = when (kind) {
-    DetectionKind.TEXT -> Color(0x2200CCFF)
-    DetectionKind.FACE -> Color(0x2266BB6A)
-    DetectionKind.OBJECT -> Color(0x22FF9800)
-}
+private fun kindFill(kind: DetectionKind): Color =
+    when (kind) {
+        DetectionKind.TEXT -> Color(0x2200CCFF)
+        DetectionKind.FACE -> Color(0x2266BB6A)
+        DetectionKind.OBJECT -> Color(0x22FF9800)
+    }
 
-private fun kindStroke(kind: DetectionKind): Color = when (kind) {
-    DetectionKind.TEXT -> Color(0xFF00CCFF)
-    DetectionKind.FACE -> Color(0xFF66BB6A)
-    DetectionKind.OBJECT -> Color(0xFFFF9800)
-}
+private fun kindStroke(kind: DetectionKind): Color =
+    when (kind) {
+        DetectionKind.TEXT -> Color(0xFF00CCFF)
+        DetectionKind.FACE -> Color(0xFF66BB6A)
+        DetectionKind.OBJECT -> Color(0xFFFF9800)
+    }
