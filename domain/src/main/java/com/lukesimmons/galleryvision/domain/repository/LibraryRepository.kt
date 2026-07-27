@@ -3,8 +3,10 @@
 package com.lukesimmons.galleryvision.domain.repository
 
 import androidx.paging.Pager
+import com.lukesimmons.galleryvision.core.database.entity.DenyEntity
 import com.lukesimmons.galleryvision.core.database.entity.DetectionEntity
 import com.lukesimmons.galleryvision.core.database.entity.MediaEntity
+import com.lukesimmons.galleryvision.core.model.DenyKind
 import kotlinx.coroutines.flow.Flow
 
 /** Read model + scan control for the media library. */
@@ -22,4 +24,12 @@ interface LibraryRepository {
     fun detectionsFor(mediaId: Long): Flow<List<DetectionEntity>>
 
     suspend fun saveDetections(detections: List<DetectionEntity>)
+
+    fun denyList(kind: DenyKind): Flow<List<DenyEntity>>
+
+    suspend fun addDeny(entry: DenyEntity)
+
+    suspend fun removeDeny(kind: DenyKind, value: String)
+
+    suspend fun updateDetection(detection: DetectionEntity)
 }

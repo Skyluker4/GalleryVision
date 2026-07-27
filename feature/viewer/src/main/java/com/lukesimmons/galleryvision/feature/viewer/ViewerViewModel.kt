@@ -8,8 +8,11 @@ import android.graphics.ImageDecoder
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lukesimmons.galleryvision.core.database.entity.DenyEntity
 import com.lukesimmons.galleryvision.core.database.entity.DetectionEntity
 import com.lukesimmons.galleryvision.core.database.entity.MediaEntity
+import com.lukesimmons.galleryvision.core.datastore.SettingsStore
+import com.lukesimmons.galleryvision.core.model.DenyKind
 import com.lukesimmons.galleryvision.core.model.DetectionKind
 import com.lukesimmons.galleryvision.core.model.DetectionSource
 import com.lukesimmons.galleryvision.domain.repository.LibraryRepository
@@ -17,40 +20,70 @@ import com.lukesimmons.galleryvision.inference.OcrEngine
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import kotlin.math.min
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class ViewerViewModel @Inject constructor(
     private val repository: LibraryRepository,
     private val ocrEngine: OcrEngine,
+    private val settings: SettingsStore,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
+
+    private val mediaId = MutableStateFlow(0L)
 
     private val _media = MutableStateFlow<MediaEntity?>(null)
     val media: StateFlow<MediaEntity?> = _media
 
-    private val _regions = MutableStateFlow<List<OcrEngine.TextRegion>>(emptyList())
-    val regions: StateFlow<List<OcrEngine.TextRegion>> = _regions
-
     private val _processing = MutableStateFlow(false)
     val processing: StateFlow<Boolean> = _processing
 
-    private val _selected = MutableStateFlow<OcrEngine.TextRegion?>(null)
-    val selected: StateFlow<OcrEngine.TextRegion?> = _selected
+    private val _selected = MutableStateFlow<DetectionEntity?>(null)
+    val selected: StateFlow<DetectionEntity?> = _selected
 
-    fun load(mediaId: Long) {
+    private val deniedWords: StateFlow<Set<String>> =
+        repository.denyList(DenyKind.WORD)
+            .map { list -> list.map { it.value.lowercase() }.toSet() }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
+
+    private val dictionary: StateFlow<Set<String>> =
+        settings.dictionaryWords.stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
+
+    private val rawDetections = mediaId.flatMapLatest { id ->
+        if (id == 0L) flowOf(emptyList()) else repository.detectionsFor(id)
+    }
+
+    val regions: StateFlow<List<DetectionEntity>> =
+        combine(rawDetections, deniedWords, dictionary) { dets, denied, dict ->
+            dets.filter { det ->
+                val text = det.valueText?.lowercase() ?: return@filter true
+                denied.none { it.isNotEmpty() && text.contains(it) }
+            }.map { det ->
+                val corrected = snapToDictionary(det.valueText ?: "", dict)
+                if (corrected == det.valueText) det else det.copy(valueText = corrected)
+            }
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    fun load(id: Long) {
+        mediaId.value = id
         viewModelScope.launch {
-            val m = repository.getMediaById(mediaId) ?: return@launch
+            val m = repository.getMediaById(id) ?: return@launch
             _media.value = m
-            val cached = repository.detectionsFor(mediaId).first()
-            if (cached.isNotEmpty()) {
-                _regions.value = cached.map { it.toTextRegion() }
-            } else {
+            if (repository.detectionsFor(id).first().isEmpty()) {
                 runOcr(m)
             }
         }
@@ -61,7 +94,6 @@ class ViewerViewModel @Inject constructor(
         try {
             val bitmap = loadBitmap(m.sourceUri) ?: return@withContext
             val results = ocrEngine.ocr(bitmap)
-            _regions.value = results
             repository.saveDetections(results.map { it.toDetectionEntity(m.id) })
         } finally {
             _processing.value = false
@@ -76,15 +108,36 @@ class ViewerViewModel @Inject constructor(
             }
         }.getOrNull()
 
-    fun select(region: OcrEngine.TextRegion?) {
+    fun select(region: DetectionEntity?) {
         _selected.value = region
     }
 
     fun selectAt(normX: Float, normY: Float) {
-        _selected.value = _regions.value.firstOrNull { pointInQuad(normX, normY, it.quad) }
+        _selected.value = regions.value.firstOrNull { pointInQuad(normX, normY, it.quad()) }
     }
 
-    fun allText(): String = _regions.value.joinToString("\n") { it.text }
+    fun editSelected(newText: String) {
+        val current = _selected.value ?: return
+        val updated = current.copy(
+            valueText = newText,
+            source = DetectionSource.MANUAL,
+            edited = true,
+        )
+        viewModelScope.launch {
+            repository.updateDetection(updated)
+            _selected.value = null
+        }
+    }
+
+    fun addWordToDictionary(word: String) {
+        viewModelScope.launch { settings.addDictionaryWord(word) }
+    }
+
+    fun addWordToDenyList(word: String) {
+        viewModelScope.launch { repository.addDeny(DenyEntity(DenyKind.WORD, word)) }
+    }
+
+    fun allText(): String = regions.value.joinToString("\n") { it.valueText ?: "" }
 
     private fun pointInQuad(x: Float, y: Float, quad: FloatArray): Boolean {
         var inside = false
@@ -98,10 +151,33 @@ class ViewerViewModel @Inject constructor(
         return inside
     }
 
-    private fun DetectionEntity.toTextRegion(): OcrEngine.TextRegion {
-        val quad = poly?.split(',')?.map { it.toFloat() }?.toFloatArray()
-            ?: floatArrayOf(left, top, right, top, right, bottom, left, bottom)
-        return OcrEngine.TextRegion(valueText ?: "", quad, confidence)
+    private fun snapToDictionary(text: String, dict: Set<String>): String {
+        if (dict.isEmpty() || text.isBlank()) return text
+        return text.split(' ').joinToString(" ") { token ->
+            var best = token
+            var bestDist = Int.MAX_VALUE
+            val threshold = if (token.length <= 4) 1 else 2
+            for (word in dict) {
+                val d = levenshtein(token.lowercase(), word.lowercase())
+                if (d < bestDist) { bestDist = d; best = word }
+            }
+            if (bestDist in 1..threshold) best else token
+        }
+    }
+
+    private fun levenshtein(a: String, b: String): Int {
+        if (a == b) return 0
+        val dp = IntArray(b.length + 1) { it }
+        for (i in 1..a.length) {
+            var prev = dp[0]
+            dp[0] = i
+            for (j in 1..b.length) {
+                val temp = dp[j]
+                dp[j] = min(dp[j] + 1, min(dp[j - 1] + 1, prev + (if (a[i - 1] == b[j - 1]) 0 else 1)))
+                prev = temp
+            }
+        }
+        return dp[b.length]
     }
 
     private fun OcrEngine.TextRegion.toDetectionEntity(mediaId: Long): DetectionEntity {
@@ -124,3 +200,7 @@ class ViewerViewModel @Inject constructor(
         )
     }
 }
+
+fun DetectionEntity.quad(): FloatArray =
+    poly?.split(',')?.mapNotNull { it.toFloatOrNull() }?.takeIf { it.size == 8 }?.toFloatArray()
+        ?: floatArrayOf(left, top, right, top, right, bottom, left, bottom)

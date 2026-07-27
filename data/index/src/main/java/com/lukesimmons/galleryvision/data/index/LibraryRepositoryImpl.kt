@@ -5,8 +5,10 @@ package com.lukesimmons.galleryvision.data.index
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import com.lukesimmons.galleryvision.core.database.GalleryVisionDatabase
+import com.lukesimmons.galleryvision.core.database.entity.DenyEntity
 import com.lukesimmons.galleryvision.core.database.entity.DetectionEntity
 import com.lukesimmons.galleryvision.core.database.entity.MediaEntity
+import com.lukesimmons.galleryvision.core.model.DenyKind
 import com.lukesimmons.galleryvision.data.mediastore.MediaStoreScanner
 import com.lukesimmons.galleryvision.domain.repository.LibraryRepository
 import kotlinx.coroutines.Dispatchers
@@ -44,4 +46,12 @@ class LibraryRepositoryImpl(
 
     override suspend fun saveDetections(detections: List<DetectionEntity>) =
         db.detectionDao().insertAll(detections)
+
+    override fun denyList(kind: DenyKind): Flow<List<DenyEntity>> = db.denyDao().forKind(kind)
+
+    override suspend fun addDeny(entry: DenyEntity) = db.denyDao().add(entry)
+
+    override suspend fun removeDeny(kind: DenyKind, value: String) = db.denyDao().remove(kind, value)
+
+    override suspend fun updateDetection(detection: DetectionEntity) = db.detectionDao().update(detection)
 }

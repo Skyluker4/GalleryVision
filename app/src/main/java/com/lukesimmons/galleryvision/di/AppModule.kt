@@ -5,6 +5,7 @@ package com.lukesimmons.galleryvision.di
 import android.content.Context
 import androidx.room.Room
 import com.lukesimmons.galleryvision.core.database.GalleryVisionDatabase
+import com.lukesimmons.galleryvision.core.datastore.SettingsStore
 import com.lukesimmons.galleryvision.data.index.LibraryRepositoryImpl
 import com.lukesimmons.galleryvision.data.mediastore.MediaStoreScanner
 import com.lukesimmons.galleryvision.domain.repository.LibraryRepository
@@ -40,4 +41,8 @@ object AppModule {
     @Provides
     @Singleton
     fun provideOcrEngine(@ApplicationContext context: Context): OcrEngine = OcrEngine(context)
+
+    @Provides
+    @Singleton
+    fun provideSettingsStore(@ApplicationContext context: Context): SettingsStore = SettingsStore(context)
 }
