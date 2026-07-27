@@ -1,6 +1,9 @@
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -81,7 +84,35 @@ kotlin {
 }
 
 dependencies {
+    // Feature + layers
+    implementation(project(":feature:library"))
+    implementation(project(":domain"))
+    implementation(project(":data:index"))
+    implementation(project(":data:mediastore"))
+    implementation(project(":inference"))
+    implementation(project(":core:model"))
+    implementation(project(":core:common"))
+    implementation(project(":core:database"))
+    implementation(project(":core:datastore"))
+    implementation(project(":core:ui"))
+    implementation(project(":core:testing"))
+
+    // Dependency injection
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    // Force a Kotlin-2.4-capable metadata reader for Hilt's processor (its bundled
+    // kotlin-metadata-jvm tops out at 2.3.0 and chokes on Kotlin-2.4 libraries).
+    ksp("org.jetbrains.kotlin:kotlin-metadata-jvm:2.4.0")
+    annotationProcessor("org.jetbrains.kotlin:kotlin-metadata-jvm:2.4.0")
+
+    // Database (Room builder used by DI)
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+
+    // Inference (kept for the on-device OCR spike test)
     implementation(libs.onnxruntime.android)
+
+    // App + Compose
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -90,6 +121,9 @@ dependencies {
     implementation(libs.compose.ui.graphics)
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material3)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+
     androidTestImplementation(libs.androidx.junit.ext)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.compose.bom))

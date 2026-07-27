@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Luke Simmons <luke5083@live.com>
 plugins {
     alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
 
 }
 

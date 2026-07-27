@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Luke Simmons <luke5083@live.com>
 plugins {
     alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
 
 }
 
@@ -27,5 +28,7 @@ kotlin {
 dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:common"))
+    api(project(":core:database"))
+    api(libs.androidx.paging.runtime)
     implementation(libs.kotlinx.coroutines.android)
 }

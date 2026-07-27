@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Luke Simmons <luke5083@live.com>
 plugins {
     alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.ksp)
 }
 
@@ -30,9 +31,9 @@ ksp {
 
 dependencies {
     implementation(project(":core:model"))
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.ktx)
-    implementation(libs.androidx.room.paging)
+    api(libs.androidx.room.runtime)
+    api(libs.androidx.room.ktx)
+    api(libs.androidx.room.paging)
     implementation(libs.kotlinx.coroutines.android)
     ksp(libs.androidx.room.compiler)
 }
