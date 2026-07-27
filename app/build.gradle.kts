@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -9,6 +11,16 @@ plugins {
 android {
     signingConfigs {
         create("release") {
+            // Release signing stays empty unless release-keystore.properties exists,
+            // so CI can assemble unsigned release builds.
+            val propsFile = rootProject.file("release-keystore.properties")
+            if (propsFile.exists()) {
+                val props = Properties().apply { propsFile.inputStream().use { load(it) } }
+                storeFile = rootProject.file(props.getProperty("storeFile"))
+                storePassword = props.getProperty("storePassword")
+                keyAlias = props.getProperty("keyAlias")
+                keyPassword = props.getProperty("keyPassword")
+            }
         }
     }
     namespace = "com.lukesimmons.galleryvision"
@@ -43,7 +55,9 @@ android {
             isDebuggable = false
             isJniDebuggable = false
             renderscriptOptimLevel = 3
-            signingConfig = signingConfigs.getByName("release")
+            if (rootProject.file("release-keystore.properties").exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             multiDexEnabled = false
         }
         getByName("debug") {
