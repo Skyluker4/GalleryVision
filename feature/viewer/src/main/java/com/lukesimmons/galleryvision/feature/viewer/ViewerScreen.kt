@@ -43,6 +43,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.lukesimmons.galleryvision.core.model.DetectionKind
+import com.lukesimmons.galleryvision.core.ui.NotesSheet
 
 /** Full-image viewer: positioned OCR overlays, tap-to-select, copy, manual edit, dictionary, deny. */
 @Composable

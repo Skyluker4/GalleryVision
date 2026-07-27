@@ -33,9 +33,37 @@ interface MediaDao {
     @Query("SELECT COUNT(*) FROM media")
     fun count(): Flow<Int>
 
+    @Query(
+        """
+        SELECT COUNT(*) FROM media
+        LEFT JOIN folder_policy ON media.folderId = folder_policy.folderId
+        WHERE (:allowListOnly = 0 AND (folder_policy.mode IS NULL OR folder_policy.mode != 'DENY'))
+           OR (:allowListOnly = 1 AND folder_policy.mode = 'ALLOW')
+        """,
+    )
+    fun countFiltered(allowListOnly: Boolean): Flow<Int>
+
     /** All media, newest first (M1 grid; deny/allow filtering layered in :domain). */
     @Query("SELECT * FROM media ORDER BY COALESCE(dateTaken, dateAdded, dateModified, 0) DESC")
     fun pagingAll(): PagingSource<Int, MediaEntity>
+
+    /**
+     * Grid paging with folder-visibility policy applied:
+     * deny mode hides DENY folders; allow-list-only mode keeps only ALLOW folders.
+     */
+    @Query(
+        """
+        SELECT media.* FROM media
+        LEFT JOIN folder_policy ON media.folderId = folder_policy.folderId
+        WHERE (:allowListOnly = 0 AND (folder_policy.mode IS NULL OR folder_policy.mode != 'DENY'))
+           OR (:allowListOnly = 1 AND folder_policy.mode = 'ALLOW')
+        ORDER BY COALESCE(dateTaken, dateAdded, dateModified, 0) DESC
+        """,
+    )
+    fun pagingFiltered(allowListOnly: Boolean): PagingSource<Int, MediaEntity>
+
+    @Query("SELECT * FROM media WHERE folderId = :folderId ORDER BY COALESCE(dateTaken, dateAdded, dateModified, 0) DESC")
+    fun forFolder(folderId: Long): Flow<List<MediaEntity>>
 
     /** Remove rows from a scan generation older than :current (incremental rescan). */
     @Query("DELETE FROM media WHERE scanGeneration < :current")
@@ -64,7 +92,24 @@ interface FolderDao {
 
     @Query("SELECT * FROM folder WHERE id = :id")
     suspend fun getById(id: Long): FolderEntity?
+
+    @Query(
+        """
+        SELECT folder.id, folder.path, folder.parentId, COUNT(media.id) AS mediaCount
+        FROM folder LEFT JOIN media ON media.folderId = folder.id
+        GROUP BY folder.id ORDER BY folder.path
+        """,
+    )
+    fun allWithCounts(): Flow<List<FolderWithCount>>
 }
+
+/** Folder row with its indexed media count, for the folders screen. */
+data class FolderWithCount(
+    val id: Long,
+    val path: String,
+    val parentId: Long?,
+    val mediaCount: Int,
+)
 
 @Dao
 interface DetectionDao {

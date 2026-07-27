@@ -6,13 +6,18 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.sqlite.db.SimpleSQLiteQuery
 import com.lukesimmons.galleryvision.core.database.GalleryVisionDatabase
+import com.lukesimmons.galleryvision.core.database.dao.FolderWithCount
 import com.lukesimmons.galleryvision.core.database.entity.DenyEntity
 import com.lukesimmons.galleryvision.core.database.entity.DetectionEntity
+import com.lukesimmons.galleryvision.core.database.entity.FolderEntity
+import com.lukesimmons.galleryvision.core.database.entity.FolderPolicyEntity
 import com.lukesimmons.galleryvision.core.database.entity.MediaEntity
 import com.lukesimmons.galleryvision.core.database.entity.NoteEntity
+import com.lukesimmons.galleryvision.core.datastore.SettingsStore
 import com.lukesimmons.galleryvision.core.model.DenyKind
 import com.lukesimmons.galleryvision.core.model.DetectionKind
 import com.lukesimmons.galleryvision.core.model.FaceClusterInfo
+import com.lukesimmons.galleryvision.core.model.FolderPolicyMode
 import com.lukesimmons.galleryvision.core.model.NoteTargetKind
 import com.lukesimmons.galleryvision.core.model.SortSpec
 import com.lukesimmons.galleryvision.data.mediastore.MediaStoreScanner
@@ -31,15 +36,17 @@ import kotlinx.coroutines.withContext
 class LibraryRepositoryImpl(
     private val db: GalleryVisionDatabase,
     private val scanner: MediaStoreScanner,
+    private val settings: SettingsStore,
 ) : LibraryRepository {
 
-    override fun mediaPager(): Pager<Int, MediaEntity> =
+    override fun mediaPager(allowListOnly: Boolean): Pager<Int, MediaEntity> =
         Pager(
             config = PagingConfig(pageSize = 60, prefetchDistance = 30, enablePlaceholders = false),
-            pagingSourceFactory = { db.mediaDao().pagingAll() },
+            pagingSourceFactory = { db.mediaDao().pagingFiltered(allowListOnly) },
         )
 
-    override fun observeMediaCount(): Flow<Int> = db.mediaDao().count()
+    override fun observeMediaCount(allowListOnly: Boolean): Flow<Int> =
+        db.mediaDao().countFiltered(allowListOnly)
 
     override suspend fun rescanNow(): Int = withContext(Dispatchers.IO) {
         val generation = System.currentTimeMillis()
@@ -100,10 +107,30 @@ class LibraryRepositoryImpl(
 
     override suspend fun deleteNote(id: Long) = db.noteDao().delete(id)
 
+    override fun foldersWithCounts(): Flow<List<FolderWithCount>> = db.folderDao().allWithCounts()
+
+    override suspend fun getFolder(id: Long): FolderEntity? = db.folderDao().getById(id)
+
+    override fun mediaForFolder(folderId: Long): Flow<List<MediaEntity>> =
+        db.mediaDao().forFolder(folderId)
+
+    override fun folderPolicies(): Flow<List<FolderPolicyEntity>> = db.folderPolicyDao().all()
+
+    override suspend fun setFolderPolicy(folderId: Long, mode: FolderPolicyMode?) {
+        if (mode == null) {
+            db.folderPolicyDao().clear(folderId)
+        } else {
+            db.folderPolicyDao().set(FolderPolicyEntity(folderId, mode))
+        }
+    }
+
     override suspend fun search(query: String, sort: SortSpec?): List<MediaEntity> = withContext(Dispatchers.IO) {
+        val allowOnly = settings.allowListOnly.first()
         val spec = QueryParser.parse(query)
         if (QueryCompiler.hasRegex(spec)) {
+            val policies = db.folderPolicyDao().all().first().associate { it.folderId to it.mode }
             val matched = db.mediaDao().getAllList().mapNotNull { media ->
+                if (!policyVisible(media.folderId, policies, allowOnly)) return@mapNotNull null
                 val fv = buildFieldValues(media)
                 if (SearchEvaluator.matches(spec, fv)) media to fv else null
             }
@@ -116,9 +143,27 @@ class LibraryRepositoryImpl(
             sorted.map { it.first }
         } else {
             val compiled = QueryCompiler.compile(spec, sort)
-            val sql = "SELECT media.* FROM media WHERE ${compiled.where} ${compiled.orderBy}"
-            db.mediaDao().searchRaw(SimpleSQLiteQuery(sql, compiled.args.toTypedArray()))
+            val sql = """
+                SELECT media.* FROM media
+                LEFT JOIN folder_policy fp ON media.folderId = fp.folderId
+                WHERE (${compiled.where}) AND (
+                    (? = 0 AND (fp.mode IS NULL OR fp.mode != 'DENY'))
+                    OR (? = 1 AND fp.mode = 'ALLOW')
+                ) ${compiled.orderBy}
+            """.trimIndent()
+            val allowArg = if (allowOnly) 1 else 0
+            val args = (compiled.args + allowArg + allowArg).toTypedArray()
+            db.mediaDao().searchRaw(SimpleSQLiteQuery(sql, args))
         }
+    }
+
+    private fun policyVisible(
+        folderId: Long?,
+        policies: Map<Long, FolderPolicyMode>,
+        allowOnly: Boolean,
+    ): Boolean {
+        val mode = folderId?.let { policies[it] }
+        return if (allowOnly) mode == FolderPolicyMode.ALLOW else mode != FolderPolicyMode.DENY
     }
 
     private suspend fun buildFieldValues(media: MediaEntity): FieldValues {

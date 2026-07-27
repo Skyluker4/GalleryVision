@@ -7,27 +7,38 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.lukesimmons.galleryvision.core.database.entity.MediaEntity
+import com.lukesimmons.galleryvision.core.datastore.SettingsStore
 import com.lukesimmons.galleryvision.core.model.SortSpec
 import com.lukesimmons.galleryvision.domain.repository.LibraryRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class LibraryViewModel @Inject constructor(
     private val repository: LibraryRepository,
+    settings: SettingsStore,
 ) : ViewModel() {
 
+    // A new pager is needed when the mode flips; folder_policy row changes
+    // invalidate the active PagingSource via Room's InvalidationTracker.
     val media: Flow<PagingData<MediaEntity>> =
-        repository.mediaPager().flow.cachedIn(viewModelScope)
+        settings.allowListOnly
+            .flatMapLatest { allow -> repository.mediaPager(allow).flow }
+            .cachedIn(viewModelScope)
 
     val mediaCount: StateFlow<Int> =
-        repository.observeMediaCount().stateIn(viewModelScope, SharingStarted.Eagerly, 0)
+        settings.allowListOnly
+            .flatMapLatest { allow -> repository.observeMediaCount(allow) }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
 
     fun rescan() {
         viewModelScope.launch { repository.rescanNow() }

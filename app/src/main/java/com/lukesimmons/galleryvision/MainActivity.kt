@@ -35,6 +35,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.lukesimmons.galleryvision.core.model.MediaType
 import com.lukesimmons.galleryvision.feature.faces.PeopleScreen
+import com.lukesimmons.galleryvision.feature.library.FolderScreen
+import com.lukesimmons.galleryvision.feature.library.FoldersScreen
 import com.lukesimmons.galleryvision.feature.library.LibraryScreen
 import com.lukesimmons.galleryvision.feature.video.VideoScreen
 import com.lukesimmons.galleryvision.feature.viewer.ViewerScreen
@@ -77,10 +79,25 @@ fun AppNavHost() {
                     navController.navigate("$route/${media.id}")
                 },
                 onPeopleClick = { navController.navigate("people") },
+                onFoldersClick = { navController.navigate("folders") },
             )
         }
         composable("people") {
             PeopleScreen()
+        }
+        composable("folders") {
+            FoldersScreen(onFolderClick = { id -> navController.navigate("folder/$id") })
+        }
+        composable(
+            route = "folder/{folderId}",
+            arguments = listOf(navArgument("folderId") { type = NavType.LongType }),
+        ) { backStackEntry ->
+            FolderScreen(
+                onMediaClick = { media ->
+                    val route = if (media.type == MediaType.IMAGE) "viewer" else "video"
+                    navController.navigate("$route/${media.id}")
+                },
+            )
         }
         composable(
             route = "viewer/{mediaId}",

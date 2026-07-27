@@ -33,6 +33,7 @@ dependencies {
     implementation(project(":domain"))
     implementation(project(":core:model"))
     implementation(project(":core:common"))
+    implementation(project(":core:datastore"))
     implementation(project(":core:ui"))
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)

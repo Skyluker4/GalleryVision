@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Luke Simmons <luke5083@live.com>
-package com.lukesimmons.galleryvision.feature.viewer
+package com.lukesimmons.galleryvision.core.ui
 
 import com.lukesimmons.galleryvision.core.database.entity.NoteEntity
 import com.lukesimmons.galleryvision.core.model.NoteTargetKind

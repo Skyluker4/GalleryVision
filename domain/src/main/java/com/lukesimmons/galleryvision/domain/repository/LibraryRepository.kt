@@ -3,22 +3,26 @@
 package com.lukesimmons.galleryvision.domain.repository
 
 import androidx.paging.Pager
+import com.lukesimmons.galleryvision.core.database.dao.FolderWithCount
 import com.lukesimmons.galleryvision.core.database.entity.DenyEntity
 import com.lukesimmons.galleryvision.core.database.entity.DetectionEntity
+import com.lukesimmons.galleryvision.core.database.entity.FolderEntity
+import com.lukesimmons.galleryvision.core.database.entity.FolderPolicyEntity
 import com.lukesimmons.galleryvision.core.database.entity.MediaEntity
 import com.lukesimmons.galleryvision.core.database.entity.NoteEntity
 import com.lukesimmons.galleryvision.core.model.DenyKind
 import com.lukesimmons.galleryvision.core.model.FaceClusterInfo
+import com.lukesimmons.galleryvision.core.model.FolderPolicyMode
 import com.lukesimmons.galleryvision.core.model.NoteTargetKind
 import com.lukesimmons.galleryvision.core.model.SortSpec
 import kotlinx.coroutines.flow.Flow
 
 /** Read model + scan control for the media library. */
 interface LibraryRepository {
-    /** Paged media for the grid, newest first. */
-    fun mediaPager(): Pager<Int, MediaEntity>
+    /** Paged media for the grid, newest first, folder-visibility policy applied. */
+    fun mediaPager(allowListOnly: Boolean): Pager<Int, MediaEntity>
 
-    fun observeMediaCount(): Flow<Int>
+    fun observeMediaCount(allowListOnly: Boolean): Flow<Int>
 
     /** Run a scan now and persist results. Returns number of media indexed. */
     suspend fun rescanNow(): Int
@@ -52,4 +56,15 @@ interface LibraryRepository {
     suspend fun addNote(note: NoteEntity): Long
 
     suspend fun deleteNote(id: Long)
+
+    fun foldersWithCounts(): Flow<List<FolderWithCount>>
+
+    suspend fun getFolder(id: Long): FolderEntity?
+
+    fun mediaForFolder(folderId: Long): Flow<List<MediaEntity>>
+
+    fun folderPolicies(): Flow<List<FolderPolicyEntity>>
+
+    /** Set a folder's visibility policy; null restores the default (visible in deny mode). */
+    suspend fun setFolderPolicy(folderId: Long, mode: FolderPolicyMode?)
 }

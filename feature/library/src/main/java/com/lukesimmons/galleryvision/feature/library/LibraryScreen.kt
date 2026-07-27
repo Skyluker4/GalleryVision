@@ -49,6 +49,7 @@ import com.lukesimmons.galleryvision.core.model.SortSpec
 fun LibraryScreen(
     onMediaClick: (MediaEntity) -> Unit,
     onPeopleClick: () -> Unit,
+    onFoldersClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: LibraryViewModel = hiltViewModel(),
 ) {
@@ -70,6 +71,7 @@ fun LibraryScreen(
             sort = sort,
             onSort = viewModel::setSort,
             onPeopleClick = onPeopleClick,
+            onFoldersClick = onFoldersClick,
         )
 
         Box(modifier = Modifier.fillMaxSize()) {
@@ -97,7 +99,7 @@ fun LibraryScreen(
                 }
                 items.itemCount == 0 -> {
                     Text(
-                        text = "No media yet. Grant access and rescan.",
+                        text = "No media to show. Check folder visibility (Folders) or rescan.",
                         modifier = Modifier.align(Alignment.Center),
                         style = MaterialTheme.typography.bodyLarge,
                     )
@@ -137,6 +139,7 @@ private fun SearchBar(
     sort: SortSpec?,
     onSort: (SortSpec) -> Unit,
     onPeopleClick: () -> Unit,
+    onFoldersClick: () -> Unit,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(8.dp),
@@ -158,6 +161,7 @@ private fun SearchBar(
             },
         )
         SortMenu(sort, onSort)
+        TextButton(onClick = onFoldersClick) { Text("Folders") }
         TextButton(onClick = onPeopleClick) { Text("People") }
     }
 }

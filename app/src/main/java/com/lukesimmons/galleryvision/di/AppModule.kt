@@ -42,7 +42,8 @@ object AppModule {
     fun provideLibraryRepository(
         db: GalleryVisionDatabase,
         scanner: MediaStoreScanner,
-    ): LibraryRepository = LibraryRepositoryImpl(db, scanner)
+        settings: SettingsStore,
+    ): LibraryRepository = LibraryRepositoryImpl(db, scanner, settings)
 
     @Provides
     @Singleton

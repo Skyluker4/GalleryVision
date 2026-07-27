@@ -28,10 +28,13 @@ kotlin {
 }
 
 dependencies {
+    implementation(project(":core:database"))
+    implementation(project(":core:model"))
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.graphics)
     implementation(libs.compose.material3)
     implementation(libs.compose.ui.tooling.preview)
+    testImplementation(libs.kotlin.test.junit)
     debugImplementation(libs.compose.ui.tooling)
 }
