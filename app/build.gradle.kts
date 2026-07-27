@@ -100,6 +100,7 @@ dependencies {
 
     // Dependency injection
     implementation(libs.hilt.android)
+    implementation(libs.androidx.hilt.work)
     ksp(libs.hilt.compiler)
     // Force a Kotlin-2.4-capable metadata reader for Hilt's processor (its bundled
     // kotlin-metadata-jvm tops out at 2.3.0 and chokes on Kotlin-2.4 libraries).
