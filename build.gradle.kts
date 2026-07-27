@@ -35,24 +35,25 @@ kover {
 }
 
 // Aggregate per-module coverage into the root report (Kover merging model).
-val coveredModules = listOf(
-    ":app",
-    ":core:model",
-    ":core:common",
-    ":core:database",
-    ":core:datastore",
-    ":core:ui",
-    ":core:testing",
-    ":data:mediastore",
-    ":data:index",
-    ":domain",
-    ":inference",
-    ":feature:library",
-    ":feature:viewer",
-    ":feature:faces",
-    ":feature:video",
-    ":feature:settings",
-)
+val coveredModules =
+    listOf(
+        ":app",
+        ":core:model",
+        ":core:common",
+        ":core:database",
+        ":core:datastore",
+        ":core:ui",
+        ":core:testing",
+        ":data:mediastore",
+        ":data:index",
+        ":domain",
+        ":inference",
+        ":feature:library",
+        ":feature:viewer",
+        ":feature:faces",
+        ":feature:video",
+        ":feature:settings",
+    )
 dependencies {
     coveredModules.forEach { kover(project(it)) }
 }

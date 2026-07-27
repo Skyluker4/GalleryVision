@@ -19,14 +19,16 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class PlayerGesturesTest {
-
     @get:Rule
     val activityRule = ActivityScenarioRule(TestGestureActivity::class.java)
 
     private val device: UiDevice
         get() = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
 
-    private fun coords(x: Float, y: Float): PointerCoords =
+    private fun coords(
+        x: Float,
+        y: Float,
+    ): PointerCoords =
         PointerCoords().apply {
             this.x = x
             this.y = y
@@ -35,11 +37,21 @@ class PlayerGesturesTest {
         }
 
     /** Two-finger pinch from startDx to endDx around (cx, cy) via the UiAutomation channel. */
-    private fun injectPinch(cx: Float, cy: Float, startDx: Float, endDx: Float) {
+    private fun injectPinch(
+        cx: Float,
+        cy: Float,
+        startDx: Float,
+        endDx: Float,
+    ) {
         val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
         val downTime = SystemClock.uptimeMillis()
 
-        fun event(action: Int, time: Long, coords: Array<PointerCoords>, props: Array<PointerProperties>): MotionEvent =
+        fun event(
+            action: Int,
+            time: Long,
+            coords: Array<PointerCoords>,
+            props: Array<PointerProperties>,
+        ): MotionEvent =
             MotionEvent.obtain(
                 downTime,
                 time,
@@ -57,10 +69,17 @@ class PlayerGesturesTest {
                 0,
             )
 
-        val props = arrayOf(
-            PointerProperties().apply { id = 0; toolType = MotionEvent.TOOL_TYPE_FINGER },
-            PointerProperties().apply { id = 1; toolType = MotionEvent.TOOL_TYPE_FINGER },
-        )
+        val props =
+            arrayOf(
+                PointerProperties().apply {
+                    id = 0
+                    toolType = MotionEvent.TOOL_TYPE_FINGER
+                },
+                PointerProperties().apply {
+                    id = 1
+                    toolType = MotionEvent.TOOL_TYPE_FINGER
+                },
+            )
         val index1 = 1 shl MotionEvent.ACTION_POINTER_INDEX_SHIFT
 
         automation.injectInputEvent(

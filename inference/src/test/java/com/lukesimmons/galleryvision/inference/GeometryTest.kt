@@ -9,7 +9,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class GeometryTest {
-
     private fun polygonArea(quad: FloatArray): Float {
         var area = 0f
         for (i in 0 until 4) {
@@ -21,9 +20,10 @@ class GeometryTest {
 
     @Test
     fun hullOfSquareWithInteriorPointIsTheSquare() {
-        val hull = Geometry.convexHull(
-            floatArrayOf(0f, 0f, 10f, 0f, 10f, 10f, 0f, 10f, 5f, 5f, 5f, 5f),
-        )
+        val hull =
+            Geometry.convexHull(
+                floatArrayOf(0f, 0f, 10f, 0f, 10f, 10f, 0f, 10f, 5f, 5f, 5f, 5f),
+            )
         assertEquals(8, hull.size)
     }
 
@@ -48,12 +48,17 @@ class GeometryTest {
     @Test
     fun minAreaRectRecoversRotatedRectangleArea() {
         // A 20x10 rectangle rotated 45 degrees: the min-area rect must match its true area.
-        val pts = floatArrayOf(
-            0f, 0f,
-            20f * COS45, 20f * SIN45,
-            20f * COS45 - 10f * SIN45, 20f * SIN45 + 10f * COS45,
-            -10f * SIN45, 10f * COS45,
-        )
+        val pts =
+            floatArrayOf(
+                0f,
+                0f,
+                20f * COS45,
+                20f * SIN45,
+                20f * COS45 - 10f * SIN45,
+                20f * SIN45 + 10f * COS45,
+                -10f * SIN45,
+                10f * COS45,
+            )
         val hull = Geometry.convexHull(pts)
         val rect = Geometry.minAreaRect(hull)
         assertEquals(200f, polygonArea(rect), 2f)

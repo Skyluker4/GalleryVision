@@ -11,7 +11,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onGloballyPositioned
 
 class TestGestureActivity : ComponentActivity() {
-
     @Volatile
     var ready = false
         private set
@@ -35,17 +34,21 @@ class TestGestureActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .onGloballyPositioned { ready = true }
-                    .playerGestures(
-                        onSeekStart = { seekStarted = true },
-                        onSeekDelta = { seekDeltaMs += it },
-                        onSeekEnd = { seekEnded = true },
-                        onVolume = { volume += it },
-                        onBrightness = { brightness += it },
-                        onZoom = { zoomCount++; zoomFactor *= it },
-                    ),
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .onGloballyPositioned { ready = true }
+                        .playerGestures(
+                            onSeekStart = { seekStarted = true },
+                            onSeekDelta = { seekDeltaMs += it },
+                            onSeekEnd = { seekEnded = true },
+                            onVolume = { volume += it },
+                            onBrightness = { brightness += it },
+                            onZoom = {
+                                zoomCount++
+                                zoomFactor *= it
+                            },
+                        ),
             )
         }
     }
