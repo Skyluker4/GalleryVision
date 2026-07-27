@@ -11,6 +11,7 @@ android {
     compileSdk = 36
     defaultConfig {
         minSdk = 24
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -29,4 +30,7 @@ dependencies {
     implementation(project(":core:model"))
     implementation(libs.onnxruntime.android)
     implementation(libs.kotlinx.coroutines.android)
+
+    androidTestImplementation(libs.androidx.junit.ext)
+    androidTestImplementation(libs.androidx.espresso.core)
 }
