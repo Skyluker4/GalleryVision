@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import com.lukesimmons.galleryvision.core.model.DetectionKind
 
 /** Full-image viewer: positioned OCR overlays, tap-to-select, copy, manual edit, dictionary, deny. */
 @Composable
@@ -99,10 +100,10 @@ fun ViewerScreen(
                         close()
                     }
                     val isSel = region.id == selected?.id
-                    drawPath(path, color = if (isSel) Color(0x5500FF88) else Color(0x2200CCFF))
+                    drawPath(path, color = if (isSel) Color(0x5500FF88) else kindFill(region.kind))
                     drawPath(
                         path,
-                        color = if (isSel) Color(0xFF00FF88) else Color(0xFF00CCFF),
+                        color = if (isSel) Color(0xFF00FF88) else kindStroke(region.kind),
                         style = Stroke(width = if (isSel) 4f else 2f),
                     )
                 }
@@ -170,4 +171,16 @@ fun ViewerScreen(
             },
         )
     }
+}
+
+private fun kindFill(kind: DetectionKind): Color = when (kind) {
+    DetectionKind.TEXT -> Color(0x2200CCFF)
+    DetectionKind.FACE -> Color(0x2266BB6A)
+    DetectionKind.OBJECT -> Color(0x22FF9800)
+}
+
+private fun kindStroke(kind: DetectionKind): Color = when (kind) {
+    DetectionKind.TEXT -> Color(0xFF00CCFF)
+    DetectionKind.FACE -> Color(0xFF66BB6A)
+    DetectionKind.OBJECT -> Color(0xFFFF9800)
 }

@@ -16,6 +16,7 @@ import com.lukesimmons.galleryvision.core.model.DenyKind
 import com.lukesimmons.galleryvision.core.model.DetectionKind
 import com.lukesimmons.galleryvision.core.model.DetectionSource
 import com.lukesimmons.galleryvision.domain.repository.LibraryRepository
+import com.lukesimmons.galleryvision.inference.FaceEngine
 import com.lukesimmons.galleryvision.inference.OcrEngine
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -40,6 +41,7 @@ import kotlin.math.min
 class ViewerViewModel @Inject constructor(
     private val repository: LibraryRepository,
     private val ocrEngine: OcrEngine,
+    private val faceEngine: FaceEngine,
     private val settings: SettingsStore,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
@@ -84,17 +86,21 @@ class ViewerViewModel @Inject constructor(
             val m = repository.getMediaById(id) ?: return@launch
             _media.value = m
             if (repository.detectionsFor(id).first().isEmpty()) {
-                runOcr(m)
+                runDetection(m)
             }
         }
     }
 
-    private suspend fun runOcr(m: MediaEntity) = withContext(Dispatchers.Default) {
+    private suspend fun runDetection(m: MediaEntity) = withContext(Dispatchers.Default) {
         _processing.value = true
         try {
             val bitmap = loadBitmap(m.sourceUri) ?: return@withContext
-            val results = ocrEngine.ocr(bitmap)
-            repository.saveDetections(results.map { it.toDetectionEntity(m.id) })
+            val ocrResults = ocrEngine.ocr(bitmap)
+            val faceResults = runCatching { faceEngine.detect(bitmap) }.getOrDefault(emptyList())
+            repository.saveDetections(
+                ocrResults.map { it.toDetectionEntity(m.id) } +
+                    faceResults.map { it.toDetectionEntity(m.id) },
+            )
         } finally {
             _processing.value = false
         }
@@ -195,6 +201,22 @@ class ViewerViewModel @Inject constructor(
             label = null,
             valueText = text,
             confidence = confidence,
+            clusterId = null,
+            edited = false,
+        )
+    }
+
+    private fun FaceEngine.Face.toDetectionEntity(mediaId: Long): DetectionEntity {
+        val box = floatArrayOf(left, top, right, top, right, bottom, left, bottom)
+        return DetectionEntity(
+            mediaId = mediaId,
+            kind = DetectionKind.FACE,
+            source = DetectionSource.AUTO,
+            left = left, top = top, right = right, bottom = bottom,
+            poly = box.joinToString(",") { it.toString() },
+            label = null,
+            valueText = null,
+            confidence = score,
             clusterId = null,
             edited = false,
         )

@@ -63,7 +63,7 @@ class OcrEngine(context: Context) {
     fun ocr(bitmap: Bitmap): List<TextRegion> {
         ensureLoaded()
         return detect(bitmap).mapNotNull { quad ->
-            val crop = rotateCrop(bitmap, quad)
+            val crop = rotateCrop(bitmap, quad) ?: return@mapNotNull null
             val (text, conf) = recognize(crop)
             crop.recycle()
             if (text.isBlank()) null else TextRegion(text, quad, conf)
@@ -194,7 +194,10 @@ class OcrEngine(context: Context) {
         return boxes
     }
 
-    private fun rotateCrop(src: Bitmap, quad: FloatArray): Bitmap {
+    private fun rotateCrop(src: Bitmap, quad: FloatArray): Bitmap? {
+        for (v in quad) {
+            if (v.isNaN() || v.isInfinite()) return null
+        }
         val x0 = quad[0] * src.width; val y0 = quad[1] * src.height
         val x1 = quad[2] * src.width; val y1 = quad[3] * src.height
         val x2 = quad[4] * src.width; val y2 = quad[5] * src.height
@@ -204,10 +207,12 @@ class OcrEngine(context: Context) {
         val srcPts = floatArrayOf(x0, y0, x1, y1, x2, y2, x3, y3)
         val dstPts = floatArrayOf(0f, 0f, w.toFloat(), 0f, w.toFloat(), h.toFloat(), 0f, h.toFloat())
         val m = Matrix()
-        m.setPolyToPoly(srcPts, 0, dstPts, 0, 4)
+        if (!m.setPolyToPoly(srcPts, 0, dstPts, 0, 4)) return null
         val out = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-        Canvas(out).drawBitmap(src, m, null)
-        return out
+        return runCatching {
+            Canvas(out).drawBitmap(src, m, null)
+            out
+        }.getOrNull()
     }
 
     private fun dist(x0: Float, y0: Float, x1: Float, y1: Float): Float {
