@@ -27,6 +27,8 @@ for core features.
 - **Search** — file path, dates (created / modified / added / taken), text, tags, objects,
   faces, and notes; wildcards and regular expressions on every field; arbitrary boolean
   combinations (AND / OR / XOR / NOT); sort on any field.
+- **Wide format support** — JPEG, PNG, WebP, HEIF/HEIC, AVIF, JPEG XL, SVG, GIF, APNG, RAW,
+  and virtually every video format (MP4, MKV, WebM, AVI, MOV, …) via libmpv.
 - **Fast** — quick cold start, indexing, adding images, and refresh.
 
 ## Privacy & licensing

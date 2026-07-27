@@ -171,8 +171,10 @@ inverse used when editing a box back to canonical image coords. Round-trip toler
 - Common settings + user `mpv.conf` override via settings editor.
 - **Supported media formats (R4/R7):**
   - *Still images* (Android `ImageDecoder` + Coil): JPEG, PNG, WebP (lossy/lossless + animated),
-    HEIF/HEIC (API 28+), AVIF (API 31+), BMP, ICO, WBMP; SVG via `coil-svg`; camera RAW (DNG and OEM
-    raw) best-effort via `DngCreator`/device codecs; JPEG XL via a decoder extension where available.
+    HEIF/HEIC (API 28+), AVIF (API 31+ natively; API < 31 via bundled `libavif`, BSD-2), BMP, ICO,
+    WBMP; **JPEG XL fully supported via a bundled `libjxl` decoder** (BSD-3, Coil native-decoder
+    extension, e.g. jxl-coder); SVG via `coil-svg`; camera RAW (DNG and OEM raw) best-effort via
+    `DngCreator`/device codecs.
   - *Animated* (routed to the video player per R7): GIF, APNG, animated WebP/AVIF.
   - *Video/audio* (libmpv/ffmpeg): MP4, MKV, WebM, MOV, AVI, 3GP, TS/MTS/M2TS, FLV, WMV, OGG and
     essentially every ffmpeg-supported container; codecs H.264/AVC, H.265/HEVC, VP8, VP9, AV1,
