@@ -72,6 +72,18 @@ interface LibraryRepository {
 
     suspend fun deleteNote(id: Long)
 
+    fun tagsFor(mediaId: Long): Flow<List<String>>
+
+    suspend fun addTag(
+        mediaId: Long,
+        name: String,
+    )
+
+    suspend fun removeTag(
+        mediaId: Long,
+        name: String,
+    )
+
     fun foldersWithCounts(): Flow<List<FolderWithCount>>
 
     suspend fun getFolder(id: Long): FolderEntity?

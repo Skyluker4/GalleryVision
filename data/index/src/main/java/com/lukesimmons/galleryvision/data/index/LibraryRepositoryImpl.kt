@@ -12,7 +12,9 @@ import com.lukesimmons.galleryvision.core.database.entity.DetectionEntity
 import com.lukesimmons.galleryvision.core.database.entity.FolderEntity
 import com.lukesimmons.galleryvision.core.database.entity.FolderPolicyEntity
 import com.lukesimmons.galleryvision.core.database.entity.MediaEntity
+import com.lukesimmons.galleryvision.core.database.entity.MediaTagCrossRef
 import com.lukesimmons.galleryvision.core.database.entity.NoteEntity
+import com.lukesimmons.galleryvision.core.database.entity.TagEntity
 import com.lukesimmons.galleryvision.core.datastore.SettingsStore
 import com.lukesimmons.galleryvision.core.model.DenyKind
 import com.lukesimmons.galleryvision.core.model.DetectionKind
@@ -119,6 +121,27 @@ class LibraryRepositoryImpl(
 
     override suspend fun deleteNote(id: Long) = db.noteDao().delete(id)
 
+    override fun tagsFor(mediaId: Long): Flow<List<String>> = db.tagDao().tagNamesFlowFor(mediaId)
+
+    override suspend fun addTag(
+        mediaId: Long,
+        name: String,
+    ) {
+        val trimmed = name.trim()
+        if (trimmed.isEmpty()) return
+        db.tagDao().insert(TagEntity(name = trimmed))
+        val tag = db.tagDao().byName(trimmed) ?: return
+        db.tagDao().addToMedia(MediaTagCrossRef(mediaId = mediaId, tagId = tag.id, box = null))
+    }
+
+    override suspend fun removeTag(
+        mediaId: Long,
+        name: String,
+    ) {
+        val tag = db.tagDao().byName(name.trim()) ?: return
+        db.tagDao().removeFromMedia(mediaId, tag.id)
+    }
+
     override fun foldersWithCounts(): Flow<List<FolderWithCount>> = db.folderDao().allWithCounts()
 
     override suspend fun getFolder(id: Long): FolderEntity? = db.folderDao().getById(id)
@@ -166,10 +189,17 @@ class LibraryRepositoryImpl(
                         .first()
                         .map { it.value.lowercase() }
                         .toSet()
+                val deniedTags =
+                    db
+                        .denyDao()
+                        .forKind(DenyKind.TAG)
+                        .first()
+                        .map { it.value.lowercase() }
+                        .toSet()
                 val matched =
                     db.mediaDao().getAllList().mapNotNull { media ->
                         if (!policyVisible(media.folderId, policies, allowOnly)) return@mapNotNull null
-                        val fv = buildFieldValues(media, deniedObjects, deniedFaces)
+                        val fv = buildFieldValues(media, deniedObjects, deniedFaces, deniedTags)
                         if (SearchEvaluator.matches(spec, fv)) media to fv else null
                     }
                 val sorted =
@@ -210,6 +240,7 @@ class LibraryRepositoryImpl(
         media: MediaEntity,
         deniedObjects: Set<String>,
         deniedFaces: Set<String>,
+        deniedTags: Set<String>,
     ): FieldValues {
         val dets = db.detectionDao().forMedia(media.id).first()
         return FieldValues(
@@ -219,7 +250,7 @@ class LibraryRepositoryImpl(
             added = media.dateAdded,
             taken = media.dateTaken,
             texts = dets.filter { it.kind == DetectionKind.TEXT }.mapNotNull { it.valueText },
-            tags = db.tagDao().tagNamesFor(media.id),
+            tags = db.tagDao().tagNamesFor(media.id).filter { it.lowercase() !in deniedTags },
             objects =
                 dets
                     .filter { it.kind == DetectionKind.OBJECT }

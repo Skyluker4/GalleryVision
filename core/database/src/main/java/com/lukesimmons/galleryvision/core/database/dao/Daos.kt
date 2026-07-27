@@ -186,6 +186,9 @@ interface TagDao {
 
     @Query("SELECT t.name FROM media_tag mt JOIN tag t ON t.id = mt.tagId WHERE mt.mediaId = :mediaId")
     suspend fun tagNamesFor(mediaId: Long): List<String>
+
+    @Query("SELECT t.name FROM media_tag mt JOIN tag t ON t.id = mt.tagId WHERE mt.mediaId = :mediaId ORDER BY t.name")
+    fun tagNamesFlowFor(mediaId: Long): Flow<List<String>>
 }
 
 @Dao

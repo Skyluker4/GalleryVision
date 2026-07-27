@@ -88,6 +88,12 @@ class ViewerViewModel
                     if (id == 0L) flowOf(emptyList()) else repository.notesFor(NoteTargetKind.MEDIA, id)
                 }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
+        val tags: StateFlow<List<String>> =
+            mediaId
+                .flatMapLatest { id ->
+                    if (id == 0L) flowOf(emptyList()) else repository.tagsFor(id)
+                }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
         val regions: StateFlow<List<DetectionEntity>> =
             combine(rawDetections, deniedWords, deniedObjects, dictionary) { dets, denied, deniedObj, dict ->
                 dets
@@ -194,6 +200,19 @@ class ViewerViewModel
 
         fun deleteNote(noteId: Long) {
             viewModelScope.launch { repository.deleteNote(noteId) }
+        }
+
+        fun addTag(name: String) {
+            val id = mediaId.value
+            val trimmed = name.trim()
+            if (id == 0L || trimmed.isEmpty()) return
+            viewModelScope.launch { repository.addTag(id, trimmed) }
+        }
+
+        fun removeTag(name: String) {
+            val id = mediaId.value
+            if (id == 0L) return
+            viewModelScope.launch { repository.removeTag(id, name) }
         }
 
         fun allText(): String = regions.value.joinToString("\n") { it.valueText ?: "" }
