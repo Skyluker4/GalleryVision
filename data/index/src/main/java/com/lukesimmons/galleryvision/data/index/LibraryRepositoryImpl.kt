@@ -4,15 +4,24 @@ package com.lukesimmons.galleryvision.data.index
 
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
+import androidx.sqlite.db.SimpleSQLiteQuery
 import com.lukesimmons.galleryvision.core.database.GalleryVisionDatabase
 import com.lukesimmons.galleryvision.core.database.entity.DenyEntity
 import com.lukesimmons.galleryvision.core.database.entity.DetectionEntity
 import com.lukesimmons.galleryvision.core.database.entity.MediaEntity
 import com.lukesimmons.galleryvision.core.model.DenyKind
+import com.lukesimmons.galleryvision.core.model.DetectionKind
+import com.lukesimmons.galleryvision.core.model.NoteTargetKind
+import com.lukesimmons.galleryvision.core.model.SortSpec
 import com.lukesimmons.galleryvision.data.mediastore.MediaStoreScanner
 import com.lukesimmons.galleryvision.domain.repository.LibraryRepository
+import com.lukesimmons.galleryvision.domain.search.FieldValues
+import com.lukesimmons.galleryvision.domain.search.QueryCompiler
+import com.lukesimmons.galleryvision.domain.search.QueryParser
+import com.lukesimmons.galleryvision.domain.search.SearchEvaluator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 
 /** Default [LibraryRepository]: MediaStore (source of truth) synced into the Room read model. */
@@ -54,4 +63,41 @@ class LibraryRepositoryImpl(
     override suspend fun removeDeny(kind: DenyKind, value: String) = db.denyDao().remove(kind, value)
 
     override suspend fun updateDetection(detection: DetectionEntity) = db.detectionDao().update(detection)
+
+    override suspend fun search(query: String, sort: SortSpec?): List<MediaEntity> = withContext(Dispatchers.IO) {
+        val spec = QueryParser.parse(query)
+        if (QueryCompiler.hasRegex(spec)) {
+            val matched = db.mediaDao().getAllList().mapNotNull { media ->
+                val fv = buildFieldValues(media)
+                if (SearchEvaluator.matches(spec, fv)) media to fv else null
+            }
+            val sorted = if (sort != null) {
+                val comp = SearchEvaluator.comparator(sort)
+                matched.sortedWith { a, b -> comp.compare(a.second, b.second) }
+            } else {
+                matched.sortedByDescending { it.first.dateTaken ?: it.first.dateAdded ?: it.first.dateModified ?: 0L }
+            }
+            sorted.map { it.first }
+        } else {
+            val compiled = QueryCompiler.compile(spec, sort)
+            val sql = "SELECT media.* FROM media WHERE ${compiled.where} ${compiled.orderBy}"
+            db.mediaDao().searchRaw(SimpleSQLiteQuery(sql, compiled.args.toTypedArray()))
+        }
+    }
+
+    private suspend fun buildFieldValues(media: MediaEntity): FieldValues {
+        val dets = db.detectionDao().forMedia(media.id).first()
+        return FieldValues(
+            path = media.path,
+            created = media.dateCreated,
+            modified = media.dateModified,
+            added = media.dateAdded,
+            taken = media.dateTaken,
+            texts = dets.filter { it.kind == DetectionKind.TEXT }.mapNotNull { it.valueText },
+            tags = db.tagDao().tagNamesFor(media.id),
+            objects = dets.filter { it.kind == DetectionKind.OBJECT }.mapNotNull { it.label },
+            faces = db.detectionDao().faceNamesFor(media.id),
+            notes = db.noteDao().forTarget(NoteTargetKind.MEDIA, media.id).first().map { it.body },
+        )
+    }
 }

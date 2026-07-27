@@ -7,6 +7,7 @@ import com.lukesimmons.galleryvision.core.database.entity.DenyEntity
 import com.lukesimmons.galleryvision.core.database.entity.DetectionEntity
 import com.lukesimmons.galleryvision.core.database.entity.MediaEntity
 import com.lukesimmons.galleryvision.core.model.DenyKind
+import com.lukesimmons.galleryvision.core.model.SortSpec
 import kotlinx.coroutines.flow.Flow
 
 /** Read model + scan control for the media library. */
@@ -24,6 +25,8 @@ interface LibraryRepository {
     fun detectionsFor(mediaId: Long): Flow<List<DetectionEntity>>
 
     suspend fun saveDetections(detections: List<DetectionEntity>)
+
+    suspend fun search(query: String, sort: SortSpec?): List<MediaEntity>
 
     fun denyList(kind: DenyKind): Flow<List<DenyEntity>>
 

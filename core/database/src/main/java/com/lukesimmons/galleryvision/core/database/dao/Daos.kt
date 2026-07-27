@@ -7,7 +7,9 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.RawQuery
 import androidx.room.Upsert
+import androidx.sqlite.db.SupportSQLiteQuery
 import com.lukesimmons.galleryvision.core.database.entity.DenyEntity
 import com.lukesimmons.galleryvision.core.database.entity.DetectionEntity
 import com.lukesimmons.galleryvision.core.database.entity.FaceClusterEntity
@@ -41,6 +43,12 @@ interface MediaDao {
 
     @Query("SELECT MAX(scanGeneration) FROM media")
     suspend fun maxScanGeneration(): Long?
+
+    @Query("SELECT * FROM media")
+    suspend fun getAllList(): List<MediaEntity>
+
+    @RawQuery(observedEntities = [MediaEntity::class])
+    fun searchRaw(query: SupportSQLiteQuery): List<MediaEntity>
 }
 
 @Dao
@@ -68,6 +76,9 @@ interface DetectionDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun update(detection: DetectionEntity)
+
+    @Query("SELECT fc.name FROM detection d JOIN face_cluster fc ON fc.id = d.clusterId WHERE d.mediaId = :mediaId AND d.kind = 'FACE'")
+    suspend fun faceNamesFor(mediaId: Long): List<String>
 }
 
 @Dao
@@ -101,6 +112,9 @@ interface TagDao {
 
     @Query("SELECT * FROM media_tag WHERE mediaId = :mediaId")
     fun forMedia(mediaId: Long): Flow<List<MediaTagCrossRef>>
+
+    @Query("SELECT t.name FROM media_tag mt JOIN tag t ON t.id = mt.tagId WHERE mt.mediaId = :mediaId")
+    suspend fun tagNamesFor(mediaId: Long): List<String>
 }
 
 @Dao
