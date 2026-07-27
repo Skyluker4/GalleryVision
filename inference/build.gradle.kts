@@ -3,6 +3,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kover)
 }
 
 android {
@@ -29,6 +30,7 @@ dependencies {
     implementation(libs.onnxruntime.android)
     implementation(libs.kotlinx.coroutines.android)
 
+    testImplementation(libs.kotlin.test.junit)
     androidTestImplementation(libs.androidx.junit.ext)
     androidTestImplementation(libs.androidx.espresso.core)
 }

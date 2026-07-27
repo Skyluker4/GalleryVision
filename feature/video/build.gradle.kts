@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.kover)
 }
 
 android {
@@ -17,6 +18,9 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+    testOptions {
+        targetSdk = 36
     }
     buildFeatures {
         compose = true
@@ -47,5 +51,8 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     ksp(libs.hilt.compiler)
     testImplementation(libs.kotlin.test.junit)
+    androidTestImplementation(libs.androidx.junit.ext)
+    androidTestImplementation(libs.androidx.uiautomator)
+    androidTestImplementation(libs.androidx.test.runner)
     debugImplementation(libs.compose.ui.tooling)
 }

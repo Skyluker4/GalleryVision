@@ -12,8 +12,10 @@ core-ktx = "1.13.1"
 lifecycle = "2.8.1"
 activity-compose = "1.9.0"
 onnxruntime = "1.27.0"
-junit-ext = "1.1.5"
-espresso = "3.5.1"
+junit-ext = "1.3.0"
+espresso = "3.7.0"
+uiautomator = "2.3.0"
+test-runner = "1.7.0"
 ui-test-manifest = "1.6.7"
 kotlin-test-junit = "2.0.0"
 # M1+ libraries (research-confirmed latest-stable where applicable)
@@ -49,6 +51,8 @@ compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-mani
 onnxruntime-android = { group = "com.microsoft.onnxruntime", name = "onnxruntime-android", version.ref = "onnxruntime" }
 androidx-junit-ext = { group = "androidx.test.ext", name = "junit", version.ref = "junit-ext" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso" }
+androidx-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
+androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "test-runner" }
 kotlin-test-junit = { group = "org.jetbrains.kotlin", name = "kotlin-test-junit", version.ref = "kotlin-test-junit" }
 # M1+
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }

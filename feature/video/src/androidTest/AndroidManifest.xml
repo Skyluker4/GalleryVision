@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Copyright (C) 2026 Luke Simmons <luke5083@live.com> -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!-- Keep the test APK's targetSdk current: a deprecated value raises a
+         system dialog that steals window focus and swallows injected gestures. -->
+    <uses-sdk
+        android:targetSdkVersion="36"
+        tools:replace="android:targetSdkVersion" />
+    <application>
+        <activity
+            android:name="com.lukesimmons.galleryvision.feature.video.TestGestureActivity"
+            android:exported="true" />
+    </application>
+</manifest>

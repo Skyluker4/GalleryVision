@@ -3,6 +3,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kover)
 }
 
 android {
@@ -31,4 +32,15 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
 
     testImplementation(libs.kotlin.test.junit)
+}
+
+kover {
+    reports {
+        verify {
+            // Search engine is the correctness core; its bar is high by design (R10).
+            rule("domain line coverage") {
+                minBound(75)
+            }
+        }
+    }
 }
