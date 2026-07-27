@@ -4,7 +4,8 @@ package com.lukesimmons.galleryvision.feature.viewer
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -65,6 +67,10 @@ fun ViewerScreen(
     var editText by remember { mutableStateOf("") }
     var showNotes by remember { mutableStateOf(false) }
     var showTags by remember { mutableStateOf(false) }
+    // Normalized [left, top, right, bottom] of the selected box while it is dragged.
+    var editBox by remember(selected?.id) {
+        mutableStateOf(selected?.let { floatArrayOf(it.left, it.top, it.right, it.bottom) })
+    }
 
     Column(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth()) {
@@ -87,12 +93,97 @@ fun ViewerScreen(
                 modifier =
                     Modifier
                         .fillMaxSize()
-                        .pointerInput(regions) {
-                            detectTapGestures { tap ->
-                                viewModel.selectAt(
-                                    (tap.x - offX) / (imgW * scale),
-                                    (tap.y - offY) / (imgH * scale),
-                                )
+                        .pointerInput(regions, selected?.id) {
+                            awaitEachGesture {
+                                val down = awaitFirstDown(requireUnconsumed = false)
+                                val sel = selected
+                                val eb = editBox
+                                var mode = 0 // 0 = tap-to-select, 1 = move box, 2 = resize corner
+                                var cornerIdx = -1
+                                if (sel != null && eb != null) {
+                                    val hitR = 48f
+                                    val corners =
+                                        listOf(
+                                            Offset(offX + eb[0] * imgW * scale, offY + eb[1] * imgH * scale),
+                                            Offset(offX + eb[2] * imgW * scale, offY + eb[1] * imgH * scale),
+                                            Offset(offX + eb[2] * imgW * scale, offY + eb[3] * imgH * scale),
+                                            Offset(offX + eb[0] * imgW * scale, offY + eb[3] * imgH * scale),
+                                        )
+                                    cornerIdx = corners.indexOfFirst { (it - down.position).getDistance() < hitR }
+                                    if (cornerIdx >= 0) {
+                                        mode = 2
+                                    } else {
+                                        val nx = (down.position.x - offX) / (imgW * scale)
+                                        val ny = (down.position.y - offY) / (imgH * scale)
+                                        if (nx in eb[0]..eb[2] && ny in eb[1]..eb[3]) mode = 1
+                                    }
+                                }
+
+                                if (mode == 0) {
+                                    val start = down.position
+                                    var moved = false
+                                    while (true) {
+                                        val change = awaitPointerEvent().changes.firstOrNull { it.id == down.id } ?: break
+                                        if (!change.pressed) break
+                                        if ((change.position - start).getDistance() > viewConfiguration.touchSlop) {
+                                            moved = true
+                                            break
+                                        }
+                                    }
+                                    if (!moved) {
+                                        viewModel.selectAt(
+                                            (start.x - offX) / (imgW * scale),
+                                            (start.y - offY) / (imgH * scale),
+                                        )
+                                    }
+                                } else {
+                                    var lastX = down.position.x
+                                    var lastY = down.position.y
+                                    while (true) {
+                                        val change = awaitPointerEvent().changes.firstOrNull { it.id == down.id } ?: break
+                                        if (!change.pressed) break
+                                        val ndx = (change.position.x - lastX) / (imgW * scale)
+                                        val ndy = (change.position.y - lastY) / (imgH * scale)
+                                        lastX = change.position.x
+                                        lastY = change.position.y
+                                        val b = editBox!!.copyOf()
+                                        if (mode == 1) {
+                                            val w = b[2] - b[0]
+                                            val h = b[3] - b[1]
+                                            b[0] = (b[0] + ndx).coerceIn(0f, 1f - w)
+                                            b[2] = b[0] + w
+                                            b[1] = (b[1] + ndy).coerceIn(0f, 1f - h)
+                                            b[3] = b[1] + h
+                                        } else {
+                                            when (cornerIdx) {
+                                                0 -> {
+                                                    b[0] = (b[0] + ndx).coerceAtMost(b[2] - 0.01f)
+                                                    b[1] = (b[1] + ndy).coerceAtMost(b[3] - 0.01f)
+                                                }
+                                                1 -> {
+                                                    b[2] = (b[2] + ndx).coerceAtLeast(b[0] + 0.01f)
+                                                    b[1] = (b[1] + ndy).coerceAtMost(b[3] - 0.01f)
+                                                }
+                                                2 -> {
+                                                    b[2] = (b[2] + ndx).coerceAtLeast(b[0] + 0.01f)
+                                                    b[3] = (b[3] + ndy).coerceAtLeast(b[1] + 0.01f)
+                                                }
+                                                3 -> {
+                                                    b[0] = (b[0] + ndx).coerceAtMost(b[2] - 0.01f)
+                                                    b[3] = (b[3] + ndy).coerceAtLeast(b[1] + 0.01f)
+                                                }
+                                            }
+                                            b[0] = b[0].coerceIn(0f, 1f)
+                                            b[1] = b[1].coerceIn(0f, 1f)
+                                            b[2] = b[2].coerceIn(0f, 1f)
+                                            b[3] = b[3].coerceIn(0f, 1f)
+                                        }
+                                        editBox = b
+                                        change.consume()
+                                    }
+                                    val b = editBox!!
+                                    viewModel.updateRegionPosition(sel ?: return@awaitEachGesture, b[0], b[1], b[2], b[3])
+                                }
                             }
                         },
             ) {
@@ -113,6 +204,21 @@ fun ViewerScreen(
                         color = if (isSel) Color(0xFF00FF88) else kindStroke(region.kind),
                         style = Stroke(width = if (isSel) 4f else 2f),
                     )
+                }
+
+                val eb = editBox
+                if (selected != null && eb != null) {
+                    val corners =
+                        listOf(
+                            Offset(offX + eb[0] * imgW * scale, offY + eb[1] * imgH * scale),
+                            Offset(offX + eb[2] * imgW * scale, offY + eb[1] * imgH * scale),
+                            Offset(offX + eb[2] * imgW * scale, offY + eb[3] * imgH * scale),
+                            Offset(offX + eb[0] * imgW * scale, offY + eb[3] * imgH * scale),
+                        )
+                    corners.forEach { c ->
+                        drawCircle(Color(0xFF00FF88), radius = 12f, center = c)
+                        drawCircle(Color.White, radius = 6f, center = c)
+                    }
                 }
             }
 

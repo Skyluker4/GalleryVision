@@ -171,6 +171,30 @@ class ViewerViewModel
             }
         }
 
+        fun updateRegionPosition(
+            region: DetectionEntity,
+            left: Float,
+            top: Float,
+            right: Float,
+            bottom: Float,
+        ) {
+            val quad = floatArrayOf(left, top, right, top, right, bottom, left, bottom)
+            val updated =
+                region.copy(
+                    left = left,
+                    top = top,
+                    right = right,
+                    bottom = bottom,
+                    poly = quad.joinToString(",") { it.toString() },
+                    source = DetectionSource.MANUAL,
+                    edited = true,
+                )
+            viewModelScope.launch {
+                repository.updateDetection(updated)
+                _selected.value = null
+            }
+        }
+
         fun addWordToDictionary(word: String) {
             viewModelScope.launch { settings.addDictionaryWord(word) }
         }
