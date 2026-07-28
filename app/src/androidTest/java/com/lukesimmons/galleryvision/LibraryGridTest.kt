@@ -3,11 +3,16 @@
 package com.lukesimmons.galleryvision
 
 import android.Manifest
+import android.content.ContentValues
+import android.content.Context
+import android.graphics.Bitmap
+import android.provider.MediaStore
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
+import java.io.ByteArrayOutputStream
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -28,6 +33,8 @@ class LibraryGridTest {
             APP_PACKAGE,
             Manifest.permission.READ_MEDIA_VIDEO,
         )
+        // CI emulators start with an empty MediaStore; seed one so the grid has a card.
+        seedTestImage(instrumentation.targetContext)
 
         androidx.test.core.app.ActivityScenario.launch(MainActivity::class.java).use {
             val device = UiDevice.getInstance(instrumentation)
@@ -51,5 +58,21 @@ class LibraryGridTest {
         const val APP_PACKAGE = "com.lukesimmons.galleryvision.debug"
         const val SCAN_TIMEOUT_MS = 45_000L
         const val NAV_TIMEOUT_MS = 8_000L
+
+        private fun seedTestImage(context: Context) {
+            val bmp = Bitmap.createBitmap(8, 8, Bitmap.Config.ARGB_8888)
+            val out = ByteArrayOutputStream()
+            bmp.compress(Bitmap.CompressFormat.JPEG, 90, out)
+            val values =
+                ContentValues().apply {
+                    put(MediaStore.Images.Media.DISPLAY_NAME, "gv-ci-seed.jpg")
+                    put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+                    put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/gv-ci")
+                }
+            val uri =
+                context.contentResolver
+                    .insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values) ?: return
+            context.contentResolver.openOutputStream(uri)?.use { it.write(out.toByteArray()) }
+        }
     }
 }

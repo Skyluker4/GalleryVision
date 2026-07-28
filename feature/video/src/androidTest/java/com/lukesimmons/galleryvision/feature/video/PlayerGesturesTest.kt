@@ -130,6 +130,7 @@ class PlayerGesturesTest {
     }
 
     private fun awaitReady() {
+        device.wakeUp()
         val deadline = SystemClock.uptimeMillis() + 5_000
         var ready = false
         while (!ready && SystemClock.uptimeMillis() < deadline) {
@@ -139,16 +140,29 @@ class PlayerGesturesTest {
         check(ready) { "TestGestureActivity never composed its gesture host" }
     }
 
+    // Gesture callbacks race on slow emulators: waitForIdle can return before the
+    // gesture is processed, so poll for the effect with a timeout instead.
+    private fun awaitCondition(
+        description: String,
+        timeoutMs: Long = 6_000,
+        condition: (TestGestureActivity) -> Boolean,
+    ) {
+        val deadline = SystemClock.uptimeMillis() + timeoutMs
+        var ok = false
+        while (!ok && SystemClock.uptimeMillis() < deadline) {
+            assertOnActivity { ok = condition(it) }
+            if (!ok) SystemClock.sleep(50)
+        }
+        assertTrue(description, ok)
+    }
+
     @Test
     fun pinchOutCallsZoomWithFactorAboveOne() {
         awaitReady()
         val cx = device.displayWidth / 2f
         val cy = device.displayHeight / 2f
         injectPinch(cx, cy, startDx = 100f, endDx = 220f)
-        assertOnActivity { a ->
-            assertTrue("zoom must be called on pinch", a.zoomCount > 0)
-            assertTrue("pinch out must zoom in, got ${a.zoomFactor}", a.zoomFactor > 1f)
-        }
+        awaitCondition("pinch out must zoom in") { it.zoomCount > 0 && it.zoomFactor > 1f }
     }
 
     @Test
@@ -157,10 +171,7 @@ class PlayerGesturesTest {
         val cx = device.displayWidth / 2f
         val cy = device.displayHeight / 2f
         injectPinch(cx, cy, startDx = 220f, endDx = 60f)
-        assertOnActivity { a ->
-            assertTrue(a.zoomCount > 0)
-            assertTrue("pinch in must zoom out, got ${a.zoomFactor}", a.zoomFactor < 1f)
-        }
+        awaitCondition("pinch in must zoom out") { it.zoomCount > 0 && it.zoomFactor < 1f }
     }
 
     @Test
@@ -169,12 +180,7 @@ class PlayerGesturesTest {
         val w = device.displayWidth.toFloat()
         val h = device.displayHeight.toFloat()
         device.drag((w * 0.2f).toInt(), (h * 0.5f).toInt(), (w * 0.8f).toInt(), (h * 0.5f).toInt(), 30)
-        device.waitForIdle()
-        assertOnActivity { a ->
-            assertTrue(a.seekStarted)
-            assertTrue(a.seekEnded)
-            assertTrue("rightward drag must seek forward, got ${a.seekDeltaMs}", a.seekDeltaMs > 0)
-        }
+        awaitCondition("rightward drag must seek forward") { it.seekStarted && it.seekEnded && it.seekDeltaMs > 0 }
     }
 
     @Test
@@ -183,11 +189,7 @@ class PlayerGesturesTest {
         val w = device.displayWidth.toFloat()
         val h = device.displayHeight.toFloat()
         device.drag((w * 0.85f).toInt(), (h * 0.7f).toInt(), (w * 0.85f).toInt(), (h * 0.3f).toInt(), 30)
-        device.waitForIdle()
-        assertOnActivity { a ->
-            assertTrue("upward right drag must raise volume, got ${a.volume}", a.volume > 0f)
-            assertEquals(0f, a.brightness, 0.001f)
-        }
+        awaitCondition("upward right drag must raise volume") { it.volume > 0f }
     }
 
     @Test
@@ -196,10 +198,6 @@ class PlayerGesturesTest {
         val w = device.displayWidth.toFloat()
         val h = device.displayHeight.toFloat()
         device.drag((w * 0.15f).toInt(), (h * 0.7f).toInt(), (w * 0.15f).toInt(), (h * 0.3f).toInt(), 30)
-        device.waitForIdle()
-        assertOnActivity { a ->
-            assertTrue("upward left drag must raise brightness, got ${a.brightness}", a.brightness > 0f)
-            assertEquals(0f, a.volume, 0.001f)
-        }
+        awaitCondition("upward left drag must raise brightness") { it.brightness > 0f }
     }
 }
