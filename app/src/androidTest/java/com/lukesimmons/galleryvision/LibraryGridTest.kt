@@ -12,11 +12,11 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
-import java.io.ByteArrayOutputStream
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.io.ByteArrayOutputStream
 
 /** Verifies the library grid renders media cards after a scan and opens a detail screen on tap. */
 @RunWith(AndroidJUnit4::class)
