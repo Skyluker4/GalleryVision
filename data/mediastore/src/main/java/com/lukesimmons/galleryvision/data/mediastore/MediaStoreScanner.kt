@@ -2,7 +2,9 @@
 // Copyright (C) 2026 Luke Simmons <luke5083@live.com>
 package com.lukesimmons.galleryvision.data.mediastore
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.provider.MediaStore
 import com.lukesimmons.galleryvision.core.database.entity.FolderEntity
 import com.lukesimmons.galleryvision.core.database.entity.MediaEntity
@@ -55,7 +57,7 @@ class MediaStoreScanner(
 
         val collection = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL)
         val projection =
-            arrayOf(
+            mutableListOf(
                 MediaStore.Files.FileColumns._ID,
                 MediaStore.Files.FileColumns.DATA,
                 MediaStore.Files.FileColumns.MEDIA_TYPE,
@@ -65,9 +67,12 @@ class MediaStoreScanner(
                 MediaStore.Files.FileColumns.WIDTH,
                 MediaStore.Files.FileColumns.HEIGHT,
                 MediaStore.Files.FileColumns.DURATION,
-                "latitude", // redacted unless ACCESS_MEDIA_LOCATION; constant removed in API 36
-                "longitude",
             )
+        // Querying these without the location permission throws "Invalid column" on API 36+.
+        if (context.checkSelfPermission(Manifest.permission.ACCESS_MEDIA_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            projection += "latitude"
+            projection += "longitude"
+        }
         val selection = "${MediaStore.Files.FileColumns.MEDIA_TYPE} IN (?, ?)"
         val args =
             arrayOf(
@@ -78,7 +83,7 @@ class MediaStoreScanner(
             )
         val sort = "${MediaStore.Files.FileColumns.DATE_ADDED} DESC"
 
-        context.contentResolver.query(collection, projection, selection, args, sort)?.use { c ->
+        context.contentResolver.query(collection, projection.toTypedArray(), selection, args, sort)?.use { c ->
             val idCol = c.getColumnIndexOrThrow(MediaStore.Files.FileColumns._ID)
             val dataCol = c.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATA)
             val typeCol = c.getColumnIndexOrThrow(MediaStore.Files.FileColumns.MEDIA_TYPE)
